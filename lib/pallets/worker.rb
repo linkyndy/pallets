@@ -19,10 +19,7 @@ module Pallets
       loop do
         task, context = backend.pick_work
         klass = task['class_name'].constantize
-        klass.new
-        klass.context = context
-        klass.run
-        task['status'] = 'finished'
+        klass.new(context).run
         backend.save_work(task, context)
       end
     rescue Exception => ex

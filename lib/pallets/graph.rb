@@ -18,6 +18,15 @@ module Pallets
       nodes.select { |_, dependencies| dependencies.include? node }.keys
     end
 
+    def build
+      groups = tsort_each.with_index.slice_when do |(a, _), (b, _)|
+        parents(a) != parents(b)
+      end.map do |group|
+        ttl = group.first[1]
+        items = group.map { |item| [ttl, item[0]] }
+      end.flatten(1)
+    end
+
     # private
 
     attr_reader :nodes

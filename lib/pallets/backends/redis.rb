@@ -1,6 +1,12 @@
 module Pallets
   module Backends
     class Redis < Base
+      def initialize(workflow_id)
+        @workflow_id = workflow_id
+        @queue_key = "pallets:workflow:#{workflow_id}:queue"
+        @pending_key = "pallets:workflow:#{workflow_id}:pending"
+        @context_key = "pallets:workflow:#{workflow_id}:context"
+      end
       # PICK = <<-LUA
       #   local work = redis.call("BRPOP", KEYS[1])
       #   local workflow_id, task_id = string.match(work, "(.*)%-(.*)")
@@ -21,13 +27,19 @@ module Pallets
         redis.call("ZREM", KEYS[1], unpack(work))
       LUA
 
-      def pick_worksh
+      DECR = <<-LUA
+        local all_pending = redis.call("ZRANGE", KEYS[1], 0, -1)
+        for score, task in pairs(all_pending) do
+          redis.call("ZINCRBY", KEYS[1], -1, task)
+        end
+      LUA
+
+      def pick_work
         # No need for transactions; task info doesn't change and context is warned
         # not to be real time but consistent with the workflow graph
-        task_id = redis.brpop('queue')
-        raw_task = redis.get("tasks:#{task_id}")
+        raw_task = redis.brpop(@queue_key)
         task = JSON.parse(raw_task)
-        raw_context = redis.get("contexts:#{workflow_id}")
+        raw_context = redis.get(@context_key)
         context = JSON.parse(raw_context)
         # Returns task and context
         # response = Pallets.redis.eval(PICK, ['queue'])
@@ -42,25 +54,24 @@ module Pallets
         # Pallets.redis.eval(SAVE, [workflow_id], [task, context])
 
         redis.multi do
-          redis.set("tasks:#{task['id']}", task)
-          redis.set("contexts:#{task['workflow_id']}", context)
-          task['next'].each do |next_task_id|
-            redis.zincrby("pending_tasks:#{task['workflow_id']}", -1, next_task_id)
-          end
-          redis.eval(ENQ, ["pending_tasks:#{task['workflow_id']}", "queue"])
+          # redis.set("tasks:#{task['id']}", task)
+          redis.set(@context_key, context)
+          redis.eval(DECR, [@pending_key])
+          redis.eval(ENQ, [@pending_key, @queue_key])
         end
       end
 
-      def save(jobs, pending_jobs, context)
+      def save_workflow(tasks, context)
         redis.multi do
-          jobs.each do |job|
-            redis.set("jobs:#{job['id']}", job)
-          end
-          pending_jobs.each do |pending_job|
-            redis.zadd("pending_jobs:#{}", *pending_job)
-          end
-          redis.set("contexts:#{}", context)
+          # tasks is [[1, Task], [2, Task], [2, Task]]
+          redis.zadd(@pending_key, tasks)
+          redis.set(@context_key, context)
         end
+      end
+
+      # enqueues all tasks that have the count 0
+      def enqueue_pending
+        redis.eval(ENQ, [@pending_key, @queue_key])
       end
 
       def create_job(job, dependency_count)

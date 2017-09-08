@@ -20,14 +20,14 @@
 #   end
 # end
 
-workflow = ProcessOrder.new(order_id: 123, method: :visa)
-workflow.start
-=> abc123
-workflow.finished?
-=> false
-workflow = ProcessOrder.find('abc123')
-workflow.tasks
-=> { :buy => :finished, :pay => :running }
+# workflow = ProcessOrder.new(order_id: 123, method: :visa)
+# workflow.start
+# => abc123
+# workflow.finished?
+# => false
+# workflow = ProcessOrder.find('abc123')
+# workflow.tasks
+# => { :buy => :finished, :pay => :running }
 
 # workflow :process_order do
 #   task :buy
@@ -83,10 +83,23 @@ module Pallets
         }
         @pending_jobs << [graph.parents(node).size, @jobs[node]['jid']]
       end
+
+      graph.tsort.each do |node|
+        @jobs[node] = {
+          'jid' => SecureRandom.hex,
+          'class' => node.to_s.camelize,
+          'wfid' => id,
+          'next_jids' => next_jids
+        }
+      end
     end
 
     def save
-      backend.save(jobs, pending_jobs, context)
+      backend.save_workflow(tasks, context)
+    end
+
+    def enqueue_initial_jobs
+      backend.enqueue_pending
     end
 
     def self.graph
@@ -104,7 +117,7 @@ module Pallets
     attr_reader :jobs
 
     def self.backend
-      Pallets::Backends::Redis
+      Pallets::Backends::Redis.new(workflow_id: id)
     end
   end
 end
