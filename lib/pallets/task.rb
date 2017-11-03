@@ -1,6 +1,6 @@
 module Pallets
   module Task
-    def perform
+    def run
     end
   end
 end

@@ -41,83 +41,92 @@ module Pallets
   class Workflow
     extend DSL::Workflow
 
-    attr_reader :id
+    attr_reader :id, :context
 
     def initialize(context = {})
       @id = nil
-      @jobs = {}
+      @jobs = []
       @pending_jobs = []
       @context = context
     end
 
     def start
-      @id = self.class.generate_id
+      puts 'starting workflow'
+      @id = Pallets.generate_id(self.class.name, 'W')
       create_jobs
       save
-      enqueue_initial_jobs
+      # enqueue_initial_jobs
     end
 
     def create_jobs
-      jobs = []
-      graph.tsort.reverse_each.with_object({}) do |node, jids|
-        next_jids = graph.children(node).map { |child| jids[child] }
-        jobs << job = {
-          'jid' => SecureRandom.hex,
-          'class' => node.to_s.camelize,
-          'wfid' => id,
-          'next_jids' => next_jids,
-          'dependency_count' => graph.parents(node).size
-        }
-        jids[node] = job['jid']
-      end
+      # jobs = []
+      # graph.tsort.reverse_each.with_object({}) do |node, jids|
+      #   next_jids = graph.children(node).map { |child| jids[child] }
+      #   jobs << job = {
+      #     'jid' => SecureRandom.hex,
+      #     'class' => node.to_s.camelize,
+      #     'wfid' => id,
+      #     'next_jids' => next_jids,
+      #     'dependency_count' => graph.parents(node).size
+      #   }
+      #   jids[node] = job['jid']
+      # end
 
-      self.class.backend.create_jobs(jobs)
+      # self.class.backend.create_jobs(jobs)
 
-      graph.tsort.reverse_each do |node|
-        next_jids = graph.children(node).map { |child_node| @jobs[child_node]['jid'] }
-        @jobs[node] = {
-          'jid' => SecureRandom.hex,
-          'class' => node.to_s.camelize,
-          'wfid' => id,
-          'next_jids' => next_jids
-        }
-        @pending_jobs << [graph.parents(node).size, @jobs[node]['jid']]
-      end
+      # graph.tsort.reverse_each do |node|
+      #   next_jids = graph.children(node).map { |child_node| @jobs[child_node]['jid'] }
+      #   @jobs[node] = {
+      #     'jid' => SecureRandom.hex,
+      #     'class' => node.to_s.camelize,
+      #     'wfid' => id,
+      #     'next_jids' => next_jids
+      #   }
+      #   @pending_jobs << [graph.parents(node).size, @jobs[node]['jid']]
+      # end
+      #
+      # graph.tsort.each do |node|
+      #   @jobs[node] = {
+      #     'jid' => SecureRandom.hex,
+      #     'class' => node.to_s.camelize,
+      #     'wfid' => id,
+      #     'next_jids' => next_jids
+      #   }
+      # end
 
-      graph.tsort.each do |node|
-        @jobs[node] = {
-          'jid' => SecureRandom.hex,
+      puts 'creating jobs'
+      self.class.graph.sort_by_dependency_count.each do |dependency_count, node|
+        jobs << [dependency_count, serializer.dump({
+          'jid' => Pallets.generate_id(node.to_s, 'J'),
           'class' => node.to_s.camelize,
-          'wfid' => id,
-          'next_jids' => next_jids
-        }
+          'wfid' => id
+        })]
       end
     end
 
     def save
-      backend.save_workflow(tasks, context)
+      puts 'saving workflow'
+      backend.start_workflow(id, jobs, serializer.dump(context))
     end
 
-    def enqueue_initial_jobs
-      backend.enqueue_pending
-    end
+    # def enqueue_initial_jobs
+    #   backend.enqueue_pending
+    # end
 
     def self.graph
       @graph ||= Graph.new
-    end
-
-    def self.generate_id
-      initials = name.gsub(/[^A-Z]+([A-Z])/, '\1')[0,3]
-      random = SecureRandom.hex(3)
-      "W#{initials}#{random}".upcase
     end
 
     # private
 
     attr_reader :jobs
 
-    def self.backend
-      Pallets::Backends::Redis.new(workflow_id: id)
+    def backend
+      Pallets::Backends::Redis.new
+    end
+
+    def serializer
+      Pallets::Serializers::Json.new
     end
   end
 end

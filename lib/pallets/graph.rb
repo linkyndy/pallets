@@ -18,7 +18,11 @@ module Pallets
       nodes.select { |_, dependencies| dependencies.include? node }.keys
     end
 
-    def build
+    # Assigns indices to list of nodes, groups them together by parent, then
+    # uses the first index for each group. Results in a list of node groups that
+    # have the number of dependencies associated before when they can be safely
+    # executed
+    def sort_by_dependency_count
       groups = tsort_each.with_index.slice_when do |(a, _), (b, _)|
         parents(a) != parents(b)
       end.map do |group|
