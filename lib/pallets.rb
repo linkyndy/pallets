@@ -15,7 +15,7 @@ require 'pallets/workflow'
 
 # TODO: this needs to be removed!
 require 'active_support/inflector'
-require 'byebug'
+require 'pry-byebug'
 require 'redis'
 require 'json'
 

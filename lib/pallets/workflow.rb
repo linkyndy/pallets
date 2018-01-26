@@ -98,15 +98,17 @@ module Pallets
       self.class.graph.sort_by_dependency_count.each do |dependency_count, node|
         jobs << [dependency_count, serializer.dump({
           'jid' => Pallets.generate_id(node.to_s, 'J'),
-          'class' => node.to_s.camelize,
-          'wfid' => id
+          'class_name' => node.to_s.camelize,
+          'wfid' => id,
+          # embrace immutability!!! (don't alter contexts between jobs of a wf)
+          'context' => context
         })]
       end
     end
 
     def save
       puts 'saving workflow'
-      backend.start_workflow(id, jobs, serializer.dump(context))
+      backend.start_workflow(id, jobs)
     end
 
     # def enqueue_initial_jobs

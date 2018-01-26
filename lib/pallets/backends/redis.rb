@@ -8,7 +8,7 @@ module Pallets
         # TODO: use Pallets.configuration.redis_namespace
         @queue_key = "pallets:queue"
         @jobs_key = "pallets:workflow:%s:jobs"
-        @context_key = "pallets:workflow:%s:context"
+        # @context_key = "pallets:workflow:%s:context"
         @redis = @client = ::Redis.new
       end
       # PICK = <<-LUA
@@ -25,9 +25,15 @@ module Pallets
       #   redis.call("SET", "workflow:" .. KEYS[1] .. ":context", ARGV[2])
       # LUA
 
+      # cannot really check the length of ZRANGEBYSCORE to see if it's empty,
+      # so we do another redis call
       ENQ = <<-LUA
-        local work = redis.call("ZRANGEBYSCORE", KEYS[1], 0, 0)
-        redis.call("LPUSH", KEYS[2], unpack(work))
+        local count = redis.call("ZCOUNT", KEYS[1], 0, 0)
+        if count > 0 then
+          local work = redis.call("ZRANGEBYSCORE", KEYS[1], 0, 0)
+          redis.call("LPUSH", KEYS[2], unpack(work))
+          redis.call("ZREM", KEYS[1], unpack(work))
+        end
       LUA
       # redis.call("ZREM", KEYS[1], unpack(work)) -- keep everything for status/debug
 
@@ -39,20 +45,31 @@ module Pallets
       LUA
 
       def pick_work
-        puts '[backend] pick work'
+        puts '[backend] waiting for work'
         # No need for transactions; job info doesn't change and context is warned
         # not to be real time but consistent with the workflow graph
-        job = redis.brpop(@queue_key)
+        _, job = redis.brpop(@queue_key)
+        puts '[backend] pick work'
         # job = JSON.parse(raw_job)
-        context = redis.get(@context_key % job['wfid'])
+        # context = redis.get(@context_key % job['wfid'])
         # context = JSON.parse(raw_context)
         # Returns job and context
         # response = Pallets.redis.eval(PICK, ['queue'])
         # JSON.parse(response[0]), JSON.parse(response[1])
-        [job, context]
+        # [job, context]
+        job
       end
 
-      def save_work(job, context)
+      def put_back_work(job)
+        # TODO: implement retry queue; zset with timestamp as score and job as
+        #       member
+        puts '[backend] putting back work'
+        redis.lpush(@queue_key, job)
+        puts '[backend] work put back'
+      end
+
+      # def save_work(wfid, context)
+      def save_work(wfid)
         puts '[backend] save work'
         # Persists job and context
         # Decrements all jobs
@@ -61,19 +78,20 @@ module Pallets
 
         redis.multi do
           # redis.set("tasks:#{task['id']}", task)
-          redis.set(@context_key % job['wfid'], context)
-          redis.eval(DECR, [@jobs_key % job['wfid']])
-          redis.eval(ENQ, [@jobs_key % job['wfid'], @queue_key])
+          # redis.set(@context_key % wfid, context)
+          redis.eval(DECR, [@jobs_key % wfid])
+          redis.eval(ENQ, [@jobs_key % wfid, @queue_key])
         end
       end
 
-      def start_workflow(wfid, jobs, context)
+      # def start_workflow(wfid, jobs, context)
+      def start_workflow(wfid, jobs)
         puts '[backend] start_workflow'
 
         redis.multi do
           # jobs is [[1, Job], [2, Job], [2, Job]]
           redis.zadd(@jobs_key % wfid, jobs)
-          redis.set(@context_key % wfid, context)
+          # redis.set(@context_key % wfid, context)
           # also prepare jobs to be picked up by workers
           redis.eval(ENQ, [@jobs_key % wfid, @queue_key])
         end
