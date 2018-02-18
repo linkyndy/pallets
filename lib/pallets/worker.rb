@@ -1,66 +1,67 @@
-require 'logger'
-
 module Pallets
   class Worker
-    attr_reader :manager, :logger
+    attr_reader :manager
 
     def initialize(manager)
       @manager = manager
       @backend = manager.backend_class.new
       @serializer = manager.serializer_class.new
+      @current_job = nil
       @needs_to_stop = false
-      @logger = Logger.new(STDOUT)
     end
 
     def start
-      logger.info '[worker] starting'
+      Pallets.logger.info "[worker] starting"
       @thread ||= Thread.new { work }
     end
 
-    def stop
-      logger.info '[worker] stopping'
+    def graceful_shutdown
+      Pallets.logger.info "[worker #{@thread.object_id}] graceful shutdown..."
       @needs_to_stop = true
-      # @thread.raise StandardError
-      if !@thread.join(5).nil?
-        logger.info '[worker] stopped'
-      else
-        # TODO: put job back in the queue so we don't lose it before killing the thread
-        logger.info '[worker] not stopped, killing'
-        # either busy with a long running job (more than join limit), either
-        # waiting with brpop on the queue
-        @thread.kill
-        logger.info '[worker] killed'
-      end
+    end
+
+    def hard_shutdown
+      Pallets.logger.info "[worker #{@thread.object_id}] hard shutdown, killing"
+      @thread.kill
+      Pallets.logger.info "[worker #{@thread.object_id}] killed"
     end
 
     private
-
-    attr_reader :thread, :backend, :serializer
 
     def work
       loop do
         break if @needs_to_stop
 
-        logger.info '[worker] picking work'
-        # job, context = backend.pick_work
-        job = backend.pick_work
-        logger.info "[worker] picked job: #{job}"
-        job = serializer.load(job)
-        logger.info '[worker] working'
-        task = job['class_name'].constantize
-        task.new(job['context']).run
-        logger.info '[worker] saving work'
-        # backend.save_work(job['wfid'], serializer.dump(context))
-        backend.save_work(job['wfid'])
+        Pallets.logger.info "[worker #{id}] picking work"
+        @current_job = @backend.pick_work id
+        if @current_job.nil?
+          Pallets.logger.info "[worker #{id}] nothing new, skipping"
+          next
+        end
+        break if @needs_to_stop # no requeue because of extra reliable queue
+        Pallets.logger.info "[worker #{id}] picked job: #{@current_job}"
+        job_hash = @serializer.load(@current_job)
+        Pallets.logger.info "[worker #{id}] working"
+        task = job_hash["class_name"].constantize
+        task.new(job_hash["context"]).run
+        Pallets.logger.info "[worker #{id}] saving work"
+        @backend.save_work(job_hash["wfid"], @current_job, id)
+        @current_job = nil
       end
-      logger.info '[worker] stopped'
+      Pallets.logger.info "[worker #{id}] done"
+      @manager.remove_worker(self)
     rescue Exception => ex
-      # put back work to queue, but with retries (don't wanna continuously
+      # put back work to queue, but with retries (don"t wanna continuously
       # rework on failing jobs)
       # backend.put_back_work(job)
-      logger.error '[worker] died:'
-      logger.error ex
-      logger.error ex.backtrace
+      Pallets.logger.error "[worker #{id}] died:"
+      Pallets.logger.error ex
+      # Pallets.logger.error ex.backtrace
+      @manager.restart_worker(self)
+    end
+
+    def id
+      Thread.current.object_id
     end
   end
 end

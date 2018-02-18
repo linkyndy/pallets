@@ -16,6 +16,7 @@ require 'pallets/workflow'
 # TODO: this needs to be removed!
 require 'active_support/inflector'
 require 'pry-byebug'
+require 'logger'
 require 'redis'
 require 'json'
 
@@ -35,6 +36,10 @@ module Pallets
   def self.configure
     self.configuration ||= Configuration.new
     yield configuration
+  end
+
+  def self.logger
+    @logger ||= Logger.new(STDOUT)
   end
 
   def self.generate_id(string, prefix='')

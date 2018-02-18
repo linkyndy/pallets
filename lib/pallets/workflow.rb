@@ -27,7 +27,7 @@
 # => false
 # workflow = ProcessOrder.find('abc123')
 # workflow.tasks
-# => { :buy => :finished, :pay => :running }
+# => { :buy => :finished, :pay => :running } # :pending, :running, :finished, :failed
 
 # workflow :process_order do
 #   task :buy
@@ -97,7 +97,7 @@ module Pallets
       puts 'creating jobs'
       self.class.graph.sort_by_dependency_count.each do |dependency_count, node|
         jobs << [dependency_count, serializer.dump({
-          'jid' => Pallets.generate_id(node.to_s, 'J'),
+          # 'jid' => Pallets.generate_id(node.to_s, 'J'),
           'class_name' => node.to_s.camelize,
           'wfid' => id,
           # embrace immutability!!! (don't alter contexts between jobs of a wf)
