@@ -1,12 +1,14 @@
 module Pallets
-  module Configuration
-    attr_accessor :backend, :serializer, :redis_namespace
+  class Configuration
+    # TODO: split these and document them
+    attr_accessor :backend, :backend_args, :blocking_timeout, :namespace, :serializer
 
     def initialize
       @backend = :redis
+      @backend_args = {}
+      @blocking_timeout = 5
+      @namespace = 'pallets'
       @serializer = :json
-      # TODO: move redis somewhere else
-      @redis_namespace = 'pallets'
     end
   end
 end

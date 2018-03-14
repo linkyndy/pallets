@@ -3,6 +3,7 @@ require 'pallets/dsl/workflow'
 
 require 'pallets/backends/base'
 require 'pallets/backends/redis'
+require 'pallets/configuration'
 require 'pallets/graph'
 require 'pallets/manager'
 # require 'pallets/runner'
@@ -30,12 +31,11 @@ require 'json'
 module Pallets
   # Your code goes here...
 
-  class << self
-    attr_accessor :configuration
+  def self.configuration
+    @configuration ||= Configuration.new
   end
 
   def self.configure
-    self.configuration ||= Configuration.new
     yield configuration
   end
 
