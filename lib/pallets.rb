@@ -18,7 +18,7 @@ require 'pallets/workflow'
 require 'active_support/inflector'
 require 'pry-byebug'
 require 'logger'
-require 'redis'
+
 require 'json'
 
 # Pallets.configure do |config|
