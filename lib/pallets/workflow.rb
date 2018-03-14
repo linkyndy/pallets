@@ -124,11 +124,11 @@ module Pallets
     attr_reader :jobs
 
     def backend
-      Pallets::Backends::Redis.new
+      Pallets.backend
     end
 
     def serializer
-      Pallets::Serializers::Json.new
+      Pallets.serializer
     end
   end
 end

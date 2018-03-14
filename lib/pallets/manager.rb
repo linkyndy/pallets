@@ -1,10 +1,8 @@
 module Pallets
   class Manager
-    attr_reader :workers, :timeout, :backend_class, :serializer_class
+    attr_reader :workers, :timeout
 
-    def initialize(workers: 2, timeout: 7, backend_class: nil, serializer_class: nil)
-      @backend_class = backend_class || Pallets::Backends::Redis
-      @serializer_class = serializer_class || Pallets::Serializers::Json
+    def initialize(workers: 2, timeout: 7)
       @workers = workers.times.map { Worker.new(self) }
       @timeout = timeout
       @lock = Mutex.new

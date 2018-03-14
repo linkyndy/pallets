@@ -4,8 +4,8 @@ module Pallets
 
     def initialize(manager)
       @manager = manager
-      @backend = manager.backend_class.new
-      @serializer = manager.serializer_class.new
+      @backend = Pallets.backend
+      @serializer = Pallets.serializer
       @current_job = nil
       @needs_to_stop = false
     end

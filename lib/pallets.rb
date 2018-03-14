@@ -2,15 +2,15 @@ require "pallets/version"
 require 'pallets/dsl/workflow'
 
 require 'pallets/backends/base'
-require 'pallets/backends/redis'
 require 'pallets/configuration'
+# require 'pallets/backends/redis'
 require 'pallets/graph'
 require 'pallets/manager'
 # require 'pallets/runner'
 # require 'pallets/storage'
 require 'pallets/pool'
 require 'pallets/serializers/base'
-require 'pallets/serializers/json'
+# require 'pallets/serializers/json'
 require 'pallets/task'
 require 'pallets/worker'
 require 'pallets/workflow'
@@ -37,6 +37,22 @@ module Pallets
 
   def self.configure
     yield configuration
+  end
+
+  def self.backend
+    @backend ||= begin
+      require "pallets/backends/#{configuration.backend}"
+      cls = "Pallets::Backends::#{configuration.backend.capitalize}".constantize
+      cls.new(namespace: configuration.namespace, blocking_timeout: configuration.blocking_timeout, **configuration.backend_args)
+    end
+  end
+
+  def self.serializer
+    @serializer ||= begin
+      require "pallets/serializers/#{configuration.serializer}"
+      cls = "Pallets::Serializers::#{configuration.serializer.capitalize}".constantize
+      cls.new
+    end
   end
 
   def self.logger
