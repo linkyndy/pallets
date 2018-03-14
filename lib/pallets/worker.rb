@@ -34,11 +34,12 @@ module Pallets
 
         Pallets.logger.info "[worker #{id}] picking work"
         @current_job = @backend.pick_work id
+        break if @needs_to_stop # no requeue because of extra reliable queue
         if @current_job.nil?
           Pallets.logger.info "[worker #{id}] nothing new, skipping"
           next
         end
-        break if @needs_to_stop # no requeue because of extra reliable queue
+
         Pallets.logger.info "[worker #{id}] picked job: #{@current_job}"
         job_hash = @serializer.load(@current_job)
         Pallets.logger.info "[worker #{id}] working"
