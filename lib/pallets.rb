@@ -43,7 +43,7 @@ module Pallets
     @backend ||= begin
       require "pallets/backends/#{configuration.backend}"
       cls = "Pallets::Backends::#{configuration.backend.capitalize}".constantize
-      cls.new(namespace: configuration.namespace, blocking_timeout: configuration.blocking_timeout, **configuration.backend_args)
+      cls.new(namespace: configuration.namespace, blocking_timeout: configuration.blocking_timeout, pool_size: configuration.pool_size, **configuration.backend_args)
     end
   end
 

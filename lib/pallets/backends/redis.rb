@@ -3,10 +3,10 @@ require 'redis'
 module Pallets
   module Backends
     class Redis < Base
-      def initialize(namespace:, blocking_timeout:, **options)
+      def initialize(namespace:, blocking_timeout:, pool_size:, **options)
         @namespace = namespace
         @blocking_timeout = blocking_timeout
-        @pool = Pallets::Pool.new(size: 2) { ::Redis.new(options) }
+        @pool = Pallets::Pool.new(size: pool_size) { ::Redis.new(options) }
 
         register_scripts
       end
