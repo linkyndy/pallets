@@ -40,6 +40,34 @@ module Pallets
         Pallets.logger.info "[backend #{id}] work saved"
       end
 
+      def discard(job, id)
+        Pallets.logger.info "[backend #{id}] discard work"
+        @pool.execute { |client|
+          client.lrem(reliability_queue_key, 0, job)
+        }
+        Pallets.logger.info "[backend #{id}] work discarded"
+      end
+
+      def retry_work(job, old_job, retry_at, id)
+        Pallets.logger.info "[backend #{id}] retry work"
+        @pool.execute { |client| client.eval(
+          @scripts['retry_work'],
+          [retry_queue_key, reliability_queue_key],
+          [retry_at, job, old_job]
+        ) }
+        Pallets.logger.info "[backend #{id}] work retried"
+      end
+
+      def kill_work(job, old_job, killed_at, id)
+        Pallets.logger.info "[backend #{id}] kill work"
+        @pool.execute { |client| client.eval(
+          @scripts['kill_work'],
+          [failed_queue_key, reliability_queue_key],
+          [killed_at, job, old_job]
+        ) }
+        Pallets.logger.info "[backend #{id}] work killed"
+      end
+
       def start_workflow(wfid, jobs)
         puts '[backend] start_workflow'
 
@@ -61,6 +89,14 @@ module Pallets
 
       def reliability_queue_key
         "#{namespace}:reliability-queue"
+      end
+
+      def retry_queue_key
+        "#{namespace}:retry-queue"
+      end
+
+      def failed_queue_key
+        "#{namespace}:failed-queue"
       end
 
       def workflow_key(wfid)
