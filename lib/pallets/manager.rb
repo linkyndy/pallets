@@ -30,6 +30,9 @@ module Pallets
       end
 
       @workers.each(&:hard_shutdown)
+      # Ensure Pallets::Shutdown got propagated and workers finished; if not,
+      # their threads will be killed anyway when the manager quits
+      sleep 0.5
     end
 
     def remove_worker(worker)

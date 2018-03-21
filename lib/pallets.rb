@@ -3,6 +3,7 @@ require 'pallets/dsl/workflow'
 
 require 'pallets/backends/base'
 require 'pallets/configuration'
+require 'pallets/errors'
 # require 'pallets/backends/redis'
 require 'pallets/graph'
 require 'pallets/manager'

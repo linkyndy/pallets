@@ -6,6 +6,7 @@ module Pallets
       @manager = manager
       @current_job = nil
       @needs_to_stop = false
+      @thread = nil
     end
 
     def start
@@ -19,8 +20,9 @@ module Pallets
     end
 
     def hard_shutdown
+      return unless @thread
       Pallets.logger.info "[worker #{@thread.object_id}] hard shutdown, killing"
-      @thread.kill
+      @thread.raise Pallets::Shutdown
       Pallets.logger.info "[worker #{@thread.object_id}] killed"
     end
 
@@ -43,6 +45,9 @@ module Pallets
         @current_job = nil
       end
       Pallets.logger.info "[worker #{id}] done"
+      @manager.remove_worker(self)
+    rescue Pallets::Shutdown
+      Pallets.logger.error "[worker #{id}] shutdown"
       @manager.remove_worker(self)
     rescue => ex
       Pallets.logger.error "[worker #{id}] died:"
