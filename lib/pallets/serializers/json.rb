@@ -1,3 +1,5 @@
+require 'json'
+
 module Pallets
   module Serializers
     class Json

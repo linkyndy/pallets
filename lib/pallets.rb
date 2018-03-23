@@ -21,8 +21,6 @@ require 'active_support/inflector'
 require 'pry-byebug'
 require 'logger'
 
-require 'json'
-
 # Pallets.configure do |config|
 #   config.backend = :redis
 #   config.serializer = :json

@@ -1,3 +1,5 @@
+require 'tsort'
+
 module Pallets
   class Graph
     include TSort
