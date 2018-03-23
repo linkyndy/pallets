@@ -1,4 +1,11 @@
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
 require 'pallets'
+
+Pallets.configure do |config|
+  config.pool_size = 2
+end
 
 class ProcessOrder < Pallets::Workflow
   task :buy
@@ -20,6 +27,20 @@ class Done < Pallets::Task; def run; puts 'DONE'; sleep(1); end; end
 
 workflow = ProcessOrder.new(order_id: 123, method: :visa)
 workflow.start
+
+class Long < Pallets::Workflow
+  task :running
+end
+
+class Running < Pallets::Task
+  def run
+    puts 'one'
+    sleep 30
+  end
+end
+
+workflow2 = Long.new
+# workflow2.start
 
 # be ruby -e 'require "pallets"; require "./test"; manager = Pallets::Manager.new; manager.start; sleep(10); manager.stop'
 

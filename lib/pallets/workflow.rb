@@ -2,7 +2,7 @@
 #   task :buy
 #   task :pay => :buy, more_context: { amount: 100 }
 #   task :ship, depends_on: :pay
-#   task :send_email, depends_on: :pay
+#   task :send_email, depends_on: :pay, retry: 3
 #   task :mark_as_complete => [:pay, :send_email]
 #   task :done => :mark_as_complete do
 #     puts 'I am done!'
@@ -101,7 +101,9 @@ module Pallets
           'class_name' => node.to_s.camelize,
           'wfid' => id,
           # embrace immutability!!! (don't alter contexts between jobs of a wf)
-          'context' => context
+          'context' => context,
+          # TODO: UTC times
+          'created_at' => Time.now.to_f
         })]
       end
     end

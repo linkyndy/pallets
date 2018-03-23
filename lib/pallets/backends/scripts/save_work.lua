@@ -8,7 +8,7 @@ for score, task in pairs(all_pending) do
 end
 
 -- Queue jobs that are ready to be processed (their score is 0) and
--- remove queued jobs from the sorted set
+-- remove queued jobs from sorted set
 local count = redis.call("ZCOUNT", KEYS[1], 0, 0)
 if count > 0 then
   local work = redis.call("ZRANGEBYSCORE", KEYS[1], 0, 0)

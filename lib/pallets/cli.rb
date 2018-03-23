@@ -11,7 +11,7 @@ module Pallets
     end
 
     def run
-      Pallets.logger.info "Starting the awesomeness of Pallets <3"
+      Pallets.logger.info 'Starting the awesomeness of Pallets <3'
 
       @manager.start
 
@@ -22,9 +22,9 @@ module Pallets
         handle_signal(signal)
       end
     rescue Interrupt
-      Pallets.logger.info "Shutting down..."
+      Pallets.logger.info 'Shutting down...'
       @manager.shutdown
-      Pallets.logger.info "Buh-bye!"
+      Pallets.logger.info 'Buh-bye!'
       exit
     end
 

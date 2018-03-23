@@ -26,6 +26,10 @@ module Pallets
       Pallets.logger.info "[worker #{@thread.object_id}] killed"
     end
 
+    def everything_ok?
+      @thread.alive?
+    end
+
     private
 
     def work

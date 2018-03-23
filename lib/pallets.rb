@@ -10,6 +10,7 @@ require 'pallets/manager'
 # require 'pallets/runner'
 # require 'pallets/storage'
 require 'pallets/pool'
+require 'pallets/scheduler'
 require 'pallets/serializers/base'
 # require 'pallets/serializers/json'
 require 'pallets/task'
@@ -20,12 +21,6 @@ require 'pallets/workflow'
 require 'active_support/inflector'
 require 'pry-byebug'
 require 'logger'
-
-# Pallets.configure do |config|
-#   config.backend = :redis
-#   config.serializer = :json
-#   config.redis_namespace = 'pallets'
-# end
 
 module Pallets
   # Your code goes here...
@@ -44,6 +39,14 @@ module Pallets
       cls = "Pallets::Backends::#{configuration.backend.capitalize}".constantize
       cls.new(namespace: configuration.namespace, blocking_timeout: configuration.blocking_timeout, pool_size: configuration.pool_size, **configuration.backend_args)
     end
+
+    # @pool ||= begin
+    #   require "pallets/backends/#{configuration.backend}"
+    #   cls = "Pallets::Backends::#{configuration.backend.capitalize}".constantize
+    #   Pallets::Pool.new(size: 2) do
+    #     cls.new(namespace: configuration.namespace, blocking_timeout: configuration.blocking_timeout, **configuration.backend_args)
+    #   end
+    # end
   end
 
   def self.serializer

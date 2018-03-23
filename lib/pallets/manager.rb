@@ -2,8 +2,10 @@ module Pallets
   class Manager
     attr_reader :workers, :timeout
 
+    # TODO: Extract arguments to config
     def initialize(workers: 2, timeout: 7)
       @workers = workers.times.map { Worker.new(self) }
+      @scheduler = Scheduler.new(self)
       @timeout = timeout
       @lock = Mutex.new
       @needs_to_stop = false
@@ -11,6 +13,7 @@ module Pallets
 
     def start
       @workers.each(&:start)
+      @scheduler.start
     end
 
     # Attempt to gracefully shutdown every worker. If any is still busy after
@@ -22,6 +25,7 @@ module Pallets
       @needs_to_stop = true
 
       @workers.each(&:graceful_shutdown)
+      @scheduler.shutdown
 
       Pallets.logger.info 'Waiting for workers to finish their jobs...'
       @timeout.times do
@@ -36,10 +40,12 @@ module Pallets
     end
 
     def remove_worker(worker)
+      Pallets.logger.info "removing worker"
       @lock.synchronize { @workers.delete(worker) }
     end
 
     def restart_worker(worker)
+      Pallets.logger.info "restarting worker"
       @lock.synchronize do
         @workers.delete(worker)
 

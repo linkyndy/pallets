@@ -3,9 +3,10 @@ require 'redis'
 module Pallets
   module Backends
     class Redis < Base
-      def initialize(namespace:, blocking_timeout:, pool_size:, **options)
+      def initialize(namespace:, blocking_timeout:, job_timeout:, pool_size:, **options)
         @namespace = namespace
         @blocking_timeout = blocking_timeout
+        @job_timeout = job_timeout
         @pool = Pallets::Pool.new(size: pool_size) { ::Redis.new(options) }
 
         register_scripts
@@ -20,14 +21,6 @@ module Pallets
           Pallets.logger.info "[backend #{id}] picked nothing"
         end
         job
-      end
-
-      def put_back_work(job)
-        # TODO: implement retry queue; zset with timestamp as score and job as
-        #       member
-        puts '[backend] putting back work'
-        @pool.execute { |client| client.rpush(queue_key, job) }
-        puts '[backend] work put back'
       end
 
       def save_work(wfid, job, id)
@@ -66,6 +59,18 @@ module Pallets
           [killed_at, job, old_job]
         ) }
         Pallets.logger.info "[backend #{id}] work killed"
+      end
+
+      def reschedule_jobs(earlier_than, id)
+        Pallets.logger.info "[backend #{id}] rescheduling work"
+        @pool.execute do |client|
+          client.eval(
+            @scripts['reschedule_work'],
+            [reliability_queue_key, retry_queue_key, queue_key],
+            [earlier_than]
+          )
+        end
+        Pallets.logger.info "[backend #{id}] work rescheduled"
       end
 
       def start_workflow(wfid, jobs)
