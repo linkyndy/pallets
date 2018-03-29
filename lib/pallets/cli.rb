@@ -4,7 +4,7 @@ module Pallets
   class CLI
     def initialize
       @manager = Manager.new
-      @signal_reader, @signal_writer = IO.pipe
+      @signal_queue = Queue.new
 
       parse_options
       setup_signal_handlers
@@ -17,8 +17,7 @@ module Pallets
 
       loop do
         # This blocks until signals are received
-        signal_reader = IO.select([@signal_reader])
-        signal = signal_reader.first[0].gets.chomp
+        signal = @signal_queue.pop
         handle_signal(signal)
       end
     rescue Interrupt
@@ -72,7 +71,7 @@ module Pallets
     def setup_signal_handlers
       %w(INT).each do |signal|
         trap signal do
-          @signal_writer.puts signal
+          @signal_queue.push signal
         end
       end
     end
