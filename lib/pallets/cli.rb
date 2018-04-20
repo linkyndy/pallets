@@ -53,12 +53,21 @@ module Pallets
           Pallets.configuration.pool_size = pool
         end
 
+        opts.on('-r', '--require PATH', 'Path containing workflow definitions') do |path|
+          require(path) || raise(ArgumentError, "Could not require #{path}. Make sure you specify a valid path")
+        end
+
         opts.on('-s', '--serializer SERIALIZER', 'Serializer to use') do |serializer|
           Pallets.configuration.serializer = serializer
         end
 
         opts.on('-u', '--blocking-timeout NUM', Integer, 'Seconds to wait for new work') do |blocking_timeout|
           Pallets.configuration.blocking_timeout = blocking_timeout
+        end
+
+        opts.on('--version', 'Version of Pallets') do
+          puts "Pallets v#{Pallets::VERSION}"
+          exit
         end
 
         opts.on_tail('-h', '--help', 'Show this message') do
