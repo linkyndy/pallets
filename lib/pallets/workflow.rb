@@ -45,85 +45,30 @@ module Pallets
 
     def initialize(context = {})
       @id = nil
-      @jobs = []
-      @pending_jobs = []
       @context = context
     end
 
     def start
-      puts 'starting workflow'
-      @id = Pallets.generate_id(self.class.name, 'W')
-      create_jobs
-      save
-      # enqueue_initial_jobs
+      @id ||= Pallets.generate_id(self.class.name, 'W')
+      backend.start_workflow(id, jobs_with_dependencies)
     end
 
-    def create_jobs
-      # jobs = []
-      # graph.tsort.reverse_each.with_object({}) do |node, jids|
-      #   next_jids = graph.children(node).map { |child| jids[child] }
-      #   jobs << job = {
-      #     'jid' => SecureRandom.hex,
-      #     'class' => node.to_s.camelize,
-      #     'wfid' => id,
-      #     'next_jids' => next_jids,
-      #     'dependency_count' => graph.parents(node).size
-      #   }
-      #   jids[node] = job['jid']
-      # end
+    private
 
-      # self.class.backend.create_jobs(jobs)
-
-      # graph.tsort.reverse_each do |node|
-      #   next_jids = graph.children(node).map { |child_node| @jobs[child_node]['jid'] }
-      #   @jobs[node] = {
-      #     'jid' => SecureRandom.hex,
-      #     'class' => node.to_s.camelize,
-      #     'wfid' => id,
-      #     'next_jids' => next_jids
-      #   }
-      #   @pending_jobs << [graph.parents(node).size, @jobs[node]['jid']]
-      # end
-      #
-      # graph.tsort.each do |node|
-      #   @jobs[node] = {
-      #     'jid' => SecureRandom.hex,
-      #     'class' => node.to_s.camelize,
-      #     'wfid' => id,
-      #     'next_jids' => next_jids
-      #   }
-      # end
-
-      puts 'creating jobs'
-      self.class.graph.sort_by_dependency_count.each do |dependency_count, node|
-        jobs << [dependency_count, serializer.dump({
-          # 'jid' => Pallets.generate_id(node.to_s, 'J'),
-          'class_name' => node.to_s.camelize,
-          'wfid' => id,
-          # embrace immutability!!! (don't alter contexts between jobs of a wf)
-          'context' => context,
-          # TODO: UTC times
-          'created_at' => Time.now.to_f
-        })]
+    def jobs_with_dependencies
+      self.class.graph.sort_by_dependency_count.map do |dependency_count, node|
+        [dependency_count, serializer.dump(job_hash(node))]
       end
     end
 
-    def save
-      puts 'saving workflow'
-      backend.start_workflow(id, jobs)
+    def job_hash(task_class)
+      {
+        'class_name' => task_class.to_s.camelize,
+        'wfid'       => id,
+        'context'    => context,
+        'created_at' => Time.now.to_f
+      }
     end
-
-    # def enqueue_initial_jobs
-    #   backend.enqueue_pending
-    # end
-
-    def self.graph
-      @graph ||= Graph.new
-    end
-
-    # private
-
-    attr_reader :jobs
 
     def backend
       Pallets.backend
@@ -131,6 +76,10 @@ module Pallets
 
     def serializer
       Pallets.serializer
+    end
+
+    def self.graph
+      @graph ||= Graph.new
     end
   end
 end
