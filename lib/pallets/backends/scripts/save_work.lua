@@ -1,5 +1,6 @@
 -- Remove job from reliability queue
 redis.call("LREM", KEYS[3], 0, ARGV[1])
+redis.call("ZREM", KEYS[4], ARGV[1])
 
 -- Deincrement all jobs from the sorted set
 local all_pending = redis.call("ZRANGE", KEYS[1], 0, -1)
