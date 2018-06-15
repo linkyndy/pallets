@@ -29,8 +29,8 @@ module Pallets
 
       Pallets.logger.info 'Waiting for workers to finish their jobs...'
       @timeout.times do
-        sleep 1
         return if @workers.empty?
+        sleep 1
       end
 
       @workers.each(&:hard_shutdown)
