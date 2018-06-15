@@ -9,10 +9,11 @@ describe Pallets::Manager do
   let(:worker_class) { class_double('Pallets::Worker').as_stubbed_const }
   let(:worker) { instance_spy('Pallets::Worker') }
   let(:another_worker) { instance_spy('Pallets::Worker') }
+  let(:yet_another_worker) { instance_spy('Pallets::Worker') }
 
   before do
     allow(scheduler_class).to receive(:new).and_return(scheduler)
-    allow(worker_class).to receive(:new).and_return(worker, another_worker)
+    allow(worker_class).to receive(:new).and_return(worker, another_worker, yet_another_worker)
     # Simulate workers shutting down gracefully
     allow(worker).to receive(:graceful_shutdown) do
       subject.workers.delete(worker)
@@ -94,6 +95,37 @@ describe Pallets::Manager do
         expect(worker).not_to have_received(:hard_shutdown)
         expect(another_worker).not_to have_received(:hard_shutdown)
       end
+    end
+  end
+
+  describe '#remove_worker' do
+    it 'removes given worker' do
+      subject.remove_worker(worker)
+      expect(subject.workers).not_to include(worker)
+    end
+
+    it 'decreases the number of workers' do
+      expect do
+        subject.remove_worker(worker)
+      end.to change { subject.workers.size }.by(-1)
+    end
+  end
+
+  describe '#restart_worker' do
+    it 'removes given worker' do
+      subject.restart_worker(worker)
+      expect(subject.workers).not_to include(worker)
+    end
+
+    it 'adds a new worker' do
+      subject.restart_worker(worker)
+      expect(subject.workers).to include(yet_another_worker)
+    end
+
+    it 'maintains the number of workers' do
+      expect do
+        subject.restart_worker(worker)
+      end.not_to change { subject.workers.size }
     end
   end
 end
