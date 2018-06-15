@@ -24,7 +24,7 @@ module Pallets
     def shutdown
       @needs_to_stop = true
 
-      @workers.each(&:graceful_shutdown)
+      @workers.reverse_each(&:graceful_shutdown)
       @scheduler.shutdown
 
       Pallets.logger.info 'Waiting for workers to finish their jobs...'
@@ -33,7 +33,7 @@ module Pallets
         sleep 1
       end
 
-      @workers.each(&:hard_shutdown)
+      @workers.reverse_each(&:hard_shutdown)
       # Ensure Pallets::Shutdown got propagated and workers finished; if not,
       # their threads will be killed anyway when the manager quits
       sleep 0.5
