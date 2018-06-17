@@ -15,6 +15,7 @@ module Pallets
       @needs_to_stop = true
 
       Pallets.logger.info "[scheduler #{@thread.object_id}] waiting to shutdown..."
+      return if !@thread
       @thread.join
     end
 
