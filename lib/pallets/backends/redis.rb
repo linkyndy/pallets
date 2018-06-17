@@ -14,13 +14,17 @@ module Pallets
 
       def pick_work id
         Pallets.logger.info "[backend #{id}] waiting for work"
-        job = @pool.execute { |client| client.brpoplpush(queue_key, reliability_queue_key, timeout: blocking_timeout) }
+        job = @pool.execute do |client|
+          client.brpoplpush(queue_key, reliability_queue_key, timeout: @blocking_timeout)
+        end
         if job
           # We store the job's timeout so we know when to retry jobs that are
           # still on the reliability queue. We do this separetely since there is
           # no other way to atomically BRPOPLPUSH from the main queue to a
           # sorted set
-          @pool.execute { |client| client.zadd(reliability_set_key, Time.now.to_f + @job_timeout, job) }
+          @pool.execute do |client|
+            client.zadd(reliability_set_key, Time.now.to_f + @job_timeout, job)
+          end
           Pallets.logger.info "[backend #{id}] picked work"
         else
           Pallets.logger.info "[backend #{id}] picked nothing"
@@ -30,41 +34,49 @@ module Pallets
 
       def save_work(wfid, job, id)
         Pallets.logger.info "[backend #{id}] save work"
-        @pool.execute { |client| client.eval(
-          @scripts['save_work'],
-          [workflow_key(wfid), queue_key, reliability_queue_key, reliability_set_key],
-          [job]
-        ) }
+        @pool.execute do |client|
+          client.eval(
+            @scripts['save_work'],
+            [workflow_key(wfid), queue_key, reliability_queue_key, reliability_set_key],
+            [job]
+          )
+        end
         Pallets.logger.info "[backend #{id}] work saved"
       end
 
       def discard(job, id)
         Pallets.logger.info "[backend #{id}] discard work"
-        @pool.execute { |client| client.eval(
-          @scripts['discard_work'],
-          [reliability_queue_key, reliability_set_key],
-          [job]
-        ) }
+        @pool.execute do |client|
+          client.eval(
+            @scripts['discard_work'],
+            [reliability_queue_key, reliability_set_key],
+            [job]
+          )
+        end
         Pallets.logger.info "[backend #{id}] work discarded"
       end
 
       def retry_work(job, old_job, retry_at, id)
         Pallets.logger.info "[backend #{id}] retry work"
-        @pool.execute { |client| client.eval(
-          @scripts['retry_work'],
-          [retry_queue_key, reliability_queue_key, reliability_set_key],
-          [retry_at, job, old_job]
-        ) }
+        @pool.execute do |client|
+          client.eval(
+            @scripts['retry_work'],
+            [retry_queue_key, reliability_queue_key, reliability_set_key],
+            [retry_at, job, old_job]
+          )
+        end
         Pallets.logger.info "[backend #{id}] work retried"
       end
 
       def kill_work(job, old_job, killed_at, id)
         Pallets.logger.info "[backend #{id}] kill work"
-        @pool.execute { |client| client.eval(
-          @scripts['kill_work'],
-          [failed_queue_key, reliability_queue_key, reliability_set_key],
-          [killed_at, job, old_job]
-        ) }
+        @pool.execute do |client|
+          client.eval(
+            @scripts['kill_work'],
+            [failed_queue_key, reliability_queue_key, reliability_set_key],
+            [killed_at, job, old_job]
+          )
+        end
         Pallets.logger.info "[backend #{id}] work killed"
       end
 
@@ -84,39 +96,39 @@ module Pallets
         puts '[backend] start_workflow'
 
         # jobs is [[1, Job], [2, Job], [2, Job]]
-        @pool.execute { |client| client.eval(
-          @scripts['start_workflow'],
-          [workflow_key(wfid), queue_key],
-          jobs
-        ) }
+        @pool.execute do |client|
+          client.eval(
+            @scripts['start_workflow'],
+            [workflow_key(wfid), queue_key],
+            jobs
+          )
+        end
       end
 
       private
 
-      attr_reader :namespace, :blocking_timeout
-
       def queue_key
-        "#{namespace}:queue"
+        "#{@namespace}:queue"
       end
 
       def reliability_queue_key
-        "#{namespace}:reliability-queue"
+        "#{@namespace}:reliability-queue"
       end
 
       def reliability_set_key
-        "#{namespace}:reliability-set"
+        "#{@namespace}:reliability-set"
       end
 
       def retry_queue_key
-        "#{namespace}:retry-queue"
+        "#{@namespace}:retry-queue"
       end
 
       def failed_queue_key
-        "#{namespace}:failed-queue"
+        "#{@namespace}:failed-queue"
       end
 
       def workflow_key(wfid)
-        "#{namespace}:workflows:#{wfid}"
+        "#{@namespace}:workflows:#{wfid}"
       end
 
       def register_scripts

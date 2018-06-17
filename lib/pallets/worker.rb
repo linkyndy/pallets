@@ -30,6 +30,10 @@ module Pallets
       @thread.alive?
     end
 
+    def id
+      @thread.object_id
+    end
+
     private
 
     def work
@@ -106,10 +110,6 @@ module Pallets
 
     def backoff_in_seconds(count)
       count ** 4 + 6
-    end
-
-    def id
-      Thread.current.object_id
     end
 
     def backend

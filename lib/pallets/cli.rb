@@ -17,8 +17,7 @@ module Pallets
 
       loop do
         # This blocks until signals are received
-        signal = @signal_queue.pop
-        handle_signal(signal)
+        handle_signal(@signal_queue.pop)
       end
     rescue Interrupt
       Pallets.logger.info 'Shutting down...'
@@ -61,7 +60,7 @@ module Pallets
           Pallets.configuration.serializer = serializer
         end
 
-        opts.on('-u', '--blocking-timeout NUM', Integer, 'Seconds to wait for new work') do |blocking_timeout|
+        opts.on('-u', '--blocking-timeout NUM', Integer, 'Seconds to block while waiting for work') do |blocking_timeout|
           Pallets.configuration.blocking_timeout = blocking_timeout
         end
 
