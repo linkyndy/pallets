@@ -19,18 +19,26 @@ module Pallets
       @thread.join
     end
 
+    def needs_to_stop?
+      @needs_to_stop
+    end
+
     def everything_ok?
       @thread.alive?
+    end
+
+    def id
+      @thread.object_id if @thread
     end
 
     private
 
     def work
       loop do
-        break if @needs_to_stop
+        break if needs_to_stop?
 
         Pallets.logger.info "[scheduler #{id}] scheduling"
-        backend.reschedule_jobs(Time.now.to_f, id)
+        backend.reschedule_jobs(Time.now.to_f)
         Pallets.logger.info "[scheduler #{id}] done scheduling"
 
         wait_a_bit
@@ -43,13 +51,9 @@ module Pallets
       # deal with shutdowns synchronously and as fast as possible
       # TODO: Extract value to config
       10.times do
-        break if @needs_to_stop
+        break if needs_to_stop?
         sleep 1
       end
-    end
-
-    def id
-      Thread.current.object_id
     end
 
     def backend
