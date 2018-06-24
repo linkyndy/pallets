@@ -26,29 +26,33 @@ module Pallets
       Pallets.logger.info "[worker #{@thread.object_id}] killed"
     end
 
+    def needs_to_stop?
+      @needs_to_stop
+    end
+
     def everything_ok?
       @thread.alive?
     end
 
     def id
-      @thread.object_id
+      @thread.object_id if @thread
     end
 
     private
 
     def work
       loop do
-        break if @needs_to_stop
+        break if needs_to_stop?
 
         Pallets.logger.info "[worker #{id}] picking work"
         @current_job = backend.pick_work id
-        break if @needs_to_stop # no requeue because of extra reliable queue
+        break if needs_to_stop? # no requeue because of extra reliable queue
         if @current_job.nil?
           Pallets.logger.info "[worker #{id}] nothing new, skipping"
           next
         end
 
-        process @current_job.dup
+        process @current_job
 
         @current_job = nil
       end
