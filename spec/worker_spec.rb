@@ -153,4 +153,92 @@ describe Pallets::Worker do
       end
     end
   end
+
+  describe '#process' do
+    let(:backend) { instance_spy('Pallets::Backends::Base') }
+    let(:serializer) { instance_spy('Pallets::Serializers::Base', load: job_hash) }
+    let(:job) { double }
+    let(:job_hash) do
+      {
+        'class_name' => 'Foo',
+        'context' => { bar: :baz },
+        'wfid' => 'qux'
+      }
+    end
+    let(:task_class) { class_double('Foo').as_stubbed_const }
+    let(:task) { instance_spy('Foo') }
+
+    class Foo < Pallets::Task
+      def run
+      end
+    end
+
+    before do
+      allow(subject).to receive(:backend).and_return(backend)
+      allow(subject).to receive(:serializer).and_return(serializer)
+      allow(task_class).to receive(:new).and_return(task)
+      allow(subject).to receive(:handle_job_error)
+    end
+
+    it 'uses the serializer to load the job' do
+      subject.send(:process, job)
+      expect(serializer).to have_received(:load).with(job)
+    end
+
+    context 'when an unexpected error occurs while loading the job' do
+      before do
+        # Simulate an unexpected error that occurs while loading the job
+        allow(serializer).to receive(:load).and_raise(ArgumentError)
+      end
+
+      it 'tells the backend to discard the job' do
+        subject.send(:process, job)
+        expect(backend).to have_received(:discard).with(job)
+      end
+
+      it 'does not instantiate the task' do
+        subject.send(:process, job)
+        expect(task_class).not_to have_received(:new)
+      end
+
+      it 'runs the task' do
+        subject.send(:process, job)
+        expect(task).not_to have_received(:run)
+      end
+
+      it 'does not tell the backend to save the job' do
+        subject.send(:process, job)
+        expect(backend).not_to have_received(:save_work)
+      end
+    end
+
+    it 'instantiates the correct task' do
+      subject.send(:process, job)
+      expect(task_class).to have_received(:new).with(bar: :baz)
+    end
+
+    it 'runs the task' do
+      subject.send(:process, job)
+      expect(task).to have_received(:run)
+    end
+
+    context 'when an unexpected error occurs while running the task' do
+      before do
+        # Simulate an unexpected job error that occurs while running the task
+        allow(task).to receive(:run).and_raise(ArgumentError)
+      end
+
+      it 'calls the error handler' do
+        subject.send(:process, job)
+        expect(subject).to have_received(:handle_job_error).with(a_kind_of(ArgumentError), job, job_hash)
+      end
+    end
+
+    context 'when the task is run successfully' do
+      it 'tells the backend to save the job' do
+        subject.send(:process, job)
+        expect(backend).to have_received(:save_work).with('qux', job)
+      end
+    end
+  end
 end
