@@ -241,4 +241,97 @@ describe Pallets::Worker do
       end
     end
   end
+
+  describe '#handle_job_error' do
+    let(:backend) { instance_spy('Pallets::Backends::Base') }
+    let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
+    let(:ex) { ArgumentError.new('foo') }
+    let(:job) { double }
+    let(:job_hash) do
+      {
+        'class_name' => 'Foo',
+        'context' => { bar: :baz },
+        'wfid' => 'qux'
+      }
+    end
+
+    before do
+      allow(subject).to receive(:backend).and_return(backend)
+      allow(subject).to receive(:serializer).and_return(serializer)
+    end
+
+    context 'with no previous failures' do
+      it 'builds a new job and uses the serializer to dump it' do
+        Timecop.freeze do
+          subject.send(:handle_job_error, ex, job, job_hash)
+          expect(serializer).to have_received(:dump).with(job_hash.merge(
+            'failures' => 1,
+            'failed_at' => Time.now.to_f,
+            'error_class' => 'ArgumentError',
+            'error_message' => 'foo'
+          ))
+        end
+      end
+    end
+
+    context 'with previous failures' do
+      let(:job_hash) do
+        {
+          'class_name' => 'Foo',
+          'context' => { bar: :baz },
+          'wfid' => 'qux',
+          'failures' => 1,
+          'failed_at' => Time.now.to_f,
+          'error_class' => 'KeyError',
+          'error_message' => 'bar'
+        }
+      end
+
+      it 'builds a new job and uses the serializer to dump it' do
+        Timecop.freeze do
+          subject.send(:handle_job_error, ex, job, job_hash)
+          expect(serializer).to have_received(:dump).with(job_hash.merge(
+            'failures' => 2,
+            'failed_at' => Time.now.to_f,
+            'error_class' => 'ArgumentError',
+            'error_message' => 'foo'
+          ))
+        end
+      end
+    end
+
+    context 'with the number of failures within the threshold' do
+      it 'tells the backend to retry the job' do
+        Timecop.freeze do
+          subject.send(:handle_job_error, ex, job, job_hash)
+          expect(backend).to have_received(:retry_work).with(
+            'foobar', job, a_value > Time.now.to_f
+          )
+        end
+      end
+    end
+
+    context 'with the number of failures exceeding the threshold' do
+      let(:job_hash) do
+        {
+          'class_name' => 'Foo',
+          'context' => { bar: :baz },
+          'wfid' => 'qux',
+          'failures' => 15,
+          'failed_at' => Time.now.to_f,
+          'error_class' => 'KeyError',
+          'error_message' => 'bar'
+        }
+      end
+
+      it 'tells the backend to kill the job' do
+        Timecop.freeze do
+          subject.send(:handle_job_error, ex, job, job_hash)
+          expect(backend).to have_received(:kill_work).with(
+            'foobar', job, Time.now.to_f
+          )
+        end
+      end
+    end
+  end
 end
