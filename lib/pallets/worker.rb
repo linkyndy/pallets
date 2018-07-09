@@ -45,7 +45,7 @@ module Pallets
         break if needs_to_stop?
 
         Pallets.logger.info "[worker #{id}] picking work"
-        @current_job = backend.pick_work id
+        @current_job = backend.pick_work
         break if needs_to_stop? # no requeue because of extra reliable queue
         if @current_job.nil?
           Pallets.logger.info "[worker #{id}] nothing new, skipping"
@@ -75,7 +75,7 @@ module Pallets
       rescue
         # We ensure only valid jobs are created. If something fishy reaches this
         # point, just discard it
-        backend.discard(job, id)
+        backend.discard(job)
         return
       end
 
@@ -88,7 +88,7 @@ module Pallets
         handle_job_error(ex, job, job_hash)
       else
         Pallets.logger.info "[worker #{id}] saving work"
-        backend.save_work(job_hash["wfid"], job, id)
+        backend.save_work(job_hash["wfid"], job)
       end
     end
 
@@ -105,10 +105,10 @@ module Pallets
       if failures < 15
         Pallets.logger.info "[worker #{id}] scheduling for retry"
         retry_at = Time.now.to_f + backoff_in_seconds(failures)
-        backend.retry_work(new_job, job, retry_at, id)
+        backend.retry_work(new_job, job, retry_at)
       else
         Pallets.logger.info "[worker #{id}] killing"
-        backend.kill_work(new_job, job, Time.now.to_f, id)
+        backend.kill_work(new_job, job, Time.now.to_f)
       end
     end
 

@@ -12,28 +12,23 @@ module Pallets
         register_scripts
       end
 
-      def pick_work id
-        Pallets.logger.info "[backend #{id}] waiting for work"
+      def pick_work
         job = @pool.execute do |client|
           client.brpoplpush(queue_key, reliability_queue_key, timeout: @blocking_timeout)
         end
         if job
           # We store the job's timeout so we know when to retry jobs that are
-          # still on the reliability queue. We do this separetely since there is
+          # still on the reliability queue. We do this separately since there is
           # no other way to atomically BRPOPLPUSH from the main queue to a
           # sorted set
           @pool.execute do |client|
             client.zadd(reliability_set_key, Time.now.to_f + @job_timeout, job)
           end
-          Pallets.logger.info "[backend #{id}] picked work"
-        else
-          Pallets.logger.info "[backend #{id}] picked nothing"
         end
         job
       end
 
-      def save_work(wfid, job, id)
-        Pallets.logger.info "[backend #{id}] save work"
+      def save_work(wfid, job)
         @pool.execute do |client|
           client.eval(
             @scripts['save_work'],
@@ -41,11 +36,9 @@ module Pallets
             [job]
           )
         end
-        Pallets.logger.info "[backend #{id}] work saved"
       end
 
-      def discard(job, id)
-        Pallets.logger.info "[backend #{id}] discard work"
+      def discard(job)
         @pool.execute do |client|
           client.eval(
             @scripts['discard_work'],
@@ -53,11 +46,9 @@ module Pallets
             [job]
           )
         end
-        Pallets.logger.info "[backend #{id}] work discarded"
       end
 
-      def retry_work(job, old_job, retry_at, id)
-        Pallets.logger.info "[backend #{id}] retry work"
+      def retry_work(job, old_job, retry_at)
         @pool.execute do |client|
           client.eval(
             @scripts['retry_work'],
@@ -65,11 +56,9 @@ module Pallets
             [retry_at, job, old_job]
           )
         end
-        Pallets.logger.info "[backend #{id}] work retried"
       end
 
-      def kill_work(job, old_job, killed_at, id)
-        Pallets.logger.info "[backend #{id}] kill work"
+      def kill_work(job, old_job, killed_at)
         @pool.execute do |client|
           client.eval(
             @scripts['kill_work'],
@@ -77,11 +66,9 @@ module Pallets
             [killed_at, job, old_job]
           )
         end
-        Pallets.logger.info "[backend #{id}] work killed"
       end
 
-      def reschedule_jobs(earlier_than, id)
-        Pallets.logger.info "[backend #{id}] rescheduling work"
+      def reschedule_jobs(earlier_than)
         @pool.execute do |client|
           client.eval(
             @scripts['reschedule_work'],
@@ -89,7 +76,6 @@ module Pallets
             [earlier_than]
           )
         end
-        Pallets.logger.info "[backend #{id}] work rescheduled"
       end
 
       def start_workflow(wfid, jobs)
