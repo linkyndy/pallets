@@ -29,13 +29,13 @@ describe Pallets::Backends::Redis do
 
       it 'pushes the job to the reliability queue' do
         subject.pick_work
-        expect(redis.lrem('test:reliability-queue', 0, 'foo')).to eq(1)
+        expect(redis.lrange('test:reliability-queue', 0, -1)).to eq(['foo'])
       end
 
       it 'adds the job to the reliability set' do
         Timecop.freeze do
           subject.pick_work
-          expect(redis.zscore('test:reliability-set', 'foo')).to eq(Time.now.to_f + 10)
+          expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to eq([['foo', Time.now.to_f + 10]])
         end
       end
     end
@@ -54,12 +54,12 @@ describe Pallets::Backends::Redis do
 
       it 'does not push anything to the reliability queue' do
         subject.pick_work
-        expect(redis.lrem('test:reliability-queue', 0, 'foo')).to eq(0)
+        expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
       end
 
       it 'does not add anything to the reliability set' do
         subject.pick_work
-        expect(redis.zscore('test:reliability-set', 'foo')).to be_nil
+        expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
       end
     end
   end
@@ -76,28 +76,22 @@ describe Pallets::Backends::Redis do
 
     it 'removes the job from the reliability queue' do
       subject.save_work('baz', 'foo')
-      # Job is removed, so trying to remove it should return 0
-      expect(redis.lrem('test:reliability-queue', 0, 'foo')).to eq(0)
+      expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
       subject.save_work('baz', 'foo')
-      expect(redis.zscore('test:reliability-set', 'foo')).to be_nil
+      expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    it 'decrements jobs from workflow set' do
+    it 'decrements and removed jobs with 0 from workflow set' do
       subject.save_work('baz', 'foo')
       expect(redis.zrange('test:workflows:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 4]])
     end
 
     it 'queues jobs that are ready to be processed' do
       subject.save_work('baz', 'foo')
-      expect(redis.lrem('test:queue', 0, 'bar')).to eq(1)
-    end
-
-    it 'removes jobs that are ready to be processed from workflow set' do
-      subject.save_work('baz', 'foo')
-      expect(redis.zrange('test:workflows:baz', 0, -1)).not_to include('bar')
+      expect(redis.lrange('test:queue', 0, -1)).to eq(['bar'])
     end
   end
 
@@ -110,13 +104,12 @@ describe Pallets::Backends::Redis do
 
     it 'removes the job from the reliability queue' do
       subject.discard('foo')
-      # Job is removed, so trying to remove it should return 0
-      expect(redis.lrem('test:reliability-queue', 0, 'foo')).to eq(0)
+      expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
       subject.discard('foo')
-      expect(redis.zscore('test:reliability-set', 'foo')).to be_nil
+      expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
   end
 
@@ -129,19 +122,18 @@ describe Pallets::Backends::Redis do
 
     it 'removes the job from the reliability queue' do
       subject.retry_work('foonew', 'foo', 1234)
-      # Job is removed, so trying to remove it should return 0
-      expect(redis.lrem('test:reliability-queue', 0, 'foo')).to eq(0)
+      expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
       subject.retry_work('foonew', 'foo', 1234)
-      expect(redis.zscore('test:reliability-set', 'foo')).to be_nil
+      expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     it 'adds the new job to the retry set' do
       Timecop.freeze do
         subject.retry_work('foonew', 'foo', 1234)
-        expect(redis.zscore('test:retry-queue', 'foonew')).to eq(1234)
+        expect(redis.zrange('test:retry-queue', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
       end
     end
   end
@@ -155,19 +147,18 @@ describe Pallets::Backends::Redis do
 
     it 'removes the job from the reliability queue' do
       subject.kill_work('foonew', 'foo', 1234)
-      # Job is removed, so trying to remove it should return 0
-      expect(redis.lrem('test:reliability-queue', 0, 'foo')).to eq(0)
+      expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
       subject.kill_work('foonew', 'foo', 1234)
-      expect(redis.zscore('test:reliability-set', 'foo')).to be_nil
+      expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     it 'adds the new job to the kill set' do
       Timecop.freeze do
         subject.kill_work('foonew', 'foo', 1234)
-        expect(redis.zscore('test:failed-queue', 'foonew')).to eq(1234)
+        expect(redis.zrange('test:failed-queue', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
       end
     end
   end
@@ -182,47 +173,36 @@ describe Pallets::Backends::Redis do
       redis.zadd('test:retry-queue', [[123, 'baz'], [1000, 'qux']])
     end
 
-    it 'queues reliability jobs that are ready to be processed' do
+    it 'queues reliability and retry jobs that are ready to be processed' do
       subject.reschedule_jobs(500)
-      expect(redis.lrem('test:queue', 0, 'foo')).to eq(1)
+      expect(redis.lrange('test:queue', 0, -1)).to contain_exactly('foo', 'baz')
     end
 
     it 'removes jobs that are ready to be processed from the reliability set' do
       subject.reschedule_jobs(500)
-      expect(redis.zscore('test:reliability-set', 'foo')).to be_nil
+      expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to eq([['bar', 1000]])
     end
 
     it 'removes jobs that are ready to be processed from the reliability queue' do
       subject.reschedule_jobs(500)
-      # Job is removed, so trying to remove it should return 0
-      expect(redis.lrem('test:reliability-queue', 0, 'foo')).to eq(0)
-    end
-
-    it 'queues retry jobs that are ready to be processed' do
-      subject.reschedule_jobs(500)
-      expect(redis.lrem('test:queue', 0, 'baz')).to eq(1)
+      expect(redis.lrange('test:reliability-queue', 0, -1)).to eq(['bar'])
     end
 
     it 'removes jobs that are ready to be processed from the retry set' do
       subject.reschedule_jobs(500)
-      expect(redis.zscore('test:retry-queue', 'baz')).to be_nil
+      expect(redis.zrange('test:retry-queue', 0, -1, with_scores: true)).to eq([['qux', 1000]])
     end
   end
 
   describe '#start_workflow' do
-    it 'adds jobs to workflow set' do
+    it 'adds pending jobs to workflow set' do
       subject.start_workflow('baz', [[0, 'foo'], [1, 'bar']])
       expect(redis.zrange('test:workflows:baz', 0, -1, with_scores: true)).to eq([['bar', 1]])
     end
 
     it 'queues jobs that are ready to be processed' do
       subject.start_workflow('baz', [[0, 'foo'], [1, 'bar']])
-      expect(redis.lrem('test:queue', 0, 'foo')).to eq(1)
-    end
-
-    it 'removes jobs that are ready to be processed from workflow set' do
-      subject.start_workflow('baz', [[0, 'foo'], [1, 'bar']])
-      expect(redis.zrange('test:workflows:baz', 0, -1)).not_to include('foo')
+      expect(redis.lrange('test:queue', 0, -1)).to eq(['foo'])
     end
   end
 end
