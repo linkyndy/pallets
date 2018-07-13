@@ -1,6 +1,7 @@
 require "pallets/version"
 
 require 'pallets/backends/base'
+require 'pallets/backends/redis'
 require 'pallets/configuration'
 require 'pallets/dsl/workflow'
 require 'pallets/errors'
@@ -9,6 +10,7 @@ require 'pallets/manager'
 require 'pallets/pool'
 require 'pallets/scheduler'
 require 'pallets/serializers/base'
+require 'pallets/serializers/json'
 require 'pallets/task'
 require 'pallets/worker'
 require 'pallets/workflow'
@@ -29,7 +31,6 @@ module Pallets
 
   def self.backend
     @backend ||= begin
-      require "pallets/backends/#{configuration.backend}"
       cls = "Pallets::Backends::#{configuration.backend.capitalize}".constantize
       cls.new(
         namespace: configuration.namespace,
@@ -43,7 +44,6 @@ module Pallets
 
   def self.serializer
     @serializer ||= begin
-      require "pallets/serializers/#{configuration.serializer}"
       cls = "Pallets::Serializers::#{configuration.serializer.capitalize}".constantize
       cls.new
     end
