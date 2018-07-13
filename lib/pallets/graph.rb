@@ -8,16 +8,12 @@ module Pallets
       @nodes = {}
     end
 
-    def add(task_name, dependencies)
-      @nodes[task_name] = dependencies
+    def add(node, dependencies)
+      @nodes[node] = dependencies
     end
 
     def parents(node)
-      nodes[node]
-    end
-
-    def children(node)
-      nodes.select { |_, dependencies| dependencies.include? node }.keys
+      @nodes[node]
     end
 
     # Assigns indices to list of nodes, groups them together by parent, then
@@ -27,22 +23,20 @@ module Pallets
     def sort_by_dependency_count
       groups = tsort_each.with_index.slice_when do |(a, _), (b, _)|
         parents(a) != parents(b)
-      end.map do |group|
-        ttl = group.first[1]
-        items = group.map { |item| [ttl, item[0]] }
-      end.flatten(1)
+      end.flat_map do |group|
+        count = group.first[1]
+        group.map { |item| [count, item[0]] }
+      end
     end
 
-    # private
-
-    attr_reader :nodes
+    private
 
     def tsort_each_node(&block)
-      nodes.each_key(&block)
+      @nodes.each_key(&block)
     end
 
     def tsort_each_child(node, &block)
-      nodes[node].each(&block)
+      @nodes[node].each(&block)
     end
   end
 end
