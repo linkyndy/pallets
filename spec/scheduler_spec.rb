@@ -85,7 +85,7 @@ describe Pallets::Scheduler do
     it 'tells the backend to reschedule jobs' do
       Timecop.freeze do
         subject.send(:work)
-        expect(backend).to have_received(:reschedule_jobs).with(Time.now.to_f)
+        expect(backend).to have_received(:reschedule).with(Time.now.to_f)
       end
     end
 
@@ -101,7 +101,7 @@ describe Pallets::Scheduler do
 
       it 'does not tell the backend to reschedule jobs' do
         subject.send(:work)
-        expect(backend).not_to have_received(:reschedule_jobs)
+        expect(backend).not_to have_received(:reschedule)
       end
 
       it 'does not wait for anything' do

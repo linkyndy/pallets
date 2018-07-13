@@ -72,7 +72,7 @@ describe Pallets::Worker do
   end
 
   describe '#work' do
-    let(:backend) { instance_spy('Pallets::Backends::Base', pick_work: job) }
+    let(:backend) { instance_spy('Pallets::Backends::Base', pick: job) }
     let(:job) { double }
 
     before do
@@ -83,12 +83,12 @@ describe Pallets::Worker do
 
     it 'tells the backend to pick work' do
       subject.send(:work)
-      expect(backend).to have_received(:pick_work)
+      expect(backend).to have_received(:pick)
     end
 
     context 'with work available' do
       before do
-        allow(backend).to receive(:pick_work).and_return(job)
+        allow(backend).to receive(:pick).and_return(job)
       end
 
       it 'processes the job' do
@@ -99,7 +99,7 @@ describe Pallets::Worker do
 
     context 'with no work available' do
       before do
-        allow(backend).to receive(:pick_work).and_return(nil)
+        allow(backend).to receive(:pick).and_return(nil)
       end
 
       it 'does not process any job' do
@@ -127,7 +127,7 @@ describe Pallets::Worker do
     context 'when it is forced to stop' do
       before do
         # Simulate a hard shutdown error that occurs while working
-        allow(backend).to receive(:pick_work).and_raise(Pallets::Shutdown)
+        allow(backend).to receive(:pick).and_raise(Pallets::Shutdown)
       end
 
       it 'does not process any job' do
@@ -144,12 +144,12 @@ describe Pallets::Worker do
     context 'when an unexpected error occurs' do
       before do
         # Simulate an unexpected non-job error that occurs while working
-        allow(backend).to receive(:pick_work).and_raise(ArgumentError)
+        allow(backend).to receive(:pick).and_raise(ArgumentError)
       end
 
       it 'asks the manager to replace itself' do
         subject.send(:work)
-        expect(manager).to have_received(:restart_worker).with(subject)
+        expect(manager).to have_received(:replace_worker).with(subject)
       end
     end
   end
@@ -208,7 +208,7 @@ describe Pallets::Worker do
 
       it 'does not tell the backend to save the job' do
         subject.send(:process, job)
-        expect(backend).not_to have_received(:save_work)
+        expect(backend).not_to have_received(:save)
       end
     end
 
@@ -237,7 +237,7 @@ describe Pallets::Worker do
     context 'when the task is run successfully' do
       it 'tells the backend to save the job' do
         subject.send(:process, job)
-        expect(backend).to have_received(:save_work).with('qux', job)
+        expect(backend).to have_received(:save).with('qux', job)
       end
     end
   end
@@ -304,7 +304,7 @@ describe Pallets::Worker do
       it 'tells the backend to retry the job' do
         Timecop.freeze do
           subject.send(:handle_job_error, ex, job, job_hash)
-          expect(backend).to have_received(:retry_work).with(
+          expect(backend).to have_received(:retry).with(
             'foobar', job, a_value > Time.now.to_f
           )
         end
@@ -327,7 +327,7 @@ describe Pallets::Worker do
       it 'tells the backend to kill the job' do
         Timecop.freeze do
           subject.send(:handle_job_error, ex, job, job_hash)
-          expect(backend).to have_received(:kill_work).with(
+          expect(backend).to have_received(:kill).with(
             'foobar', job, Time.now.to_f
           )
         end

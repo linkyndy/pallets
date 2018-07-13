@@ -17,24 +17,24 @@ describe Pallets::Backends::Redis do
     redis.flushdb
   end
 
-  describe '#pick_work' do
+  describe '#pick' do
     context 'with work available' do
       before do
         redis.lpush('test:queue', 'foo')
       end
 
       it 'returns the job' do
-        expect(subject.pick_work).to eq('foo')
+        expect(subject.pick).to eq('foo')
       end
 
       it 'pushes the job to the reliability queue' do
-        subject.pick_work
+        subject.pick
         expect(redis.lrange('test:reliability-queue', 0, -1)).to eq(['foo'])
       end
 
       it 'adds the job to the reliability set' do
         Timecop.freeze do
-          subject.pick_work
+          subject.pick
           expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to eq([['foo', Time.now.to_f + 10]])
         end
       end
@@ -43,28 +43,28 @@ describe Pallets::Backends::Redis do
     context 'with no work available' do
       it 'blocks a given number of seconds' do
         start = Time.now
-        subject.pick_work
+        subject.pick
         finish = Time.now
         expect(finish).to be_within(2).of(start)
       end
 
       it 'returns nil' do
-        expect(subject.pick_work).to be_nil
+        expect(subject.pick).to be_nil
       end
 
       it 'does not push anything to the reliability queue' do
-        subject.pick_work
+        subject.pick
         expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
       end
 
       it 'does not add anything to the reliability set' do
-        subject.pick_work
+        subject.pick
         expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
       end
     end
   end
 
-  describe '#save_work' do
+  describe '#save' do
     before do
       # Set up reliability components
       redis.lpush('test:reliability-queue', 'foo')
@@ -75,22 +75,22 @@ describe Pallets::Backends::Redis do
     end
 
     it 'removes the job from the reliability queue' do
-      subject.save_work('baz', 'foo')
+      subject.save('baz', 'foo')
       expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.save_work('baz', 'foo')
+      subject.save('baz', 'foo')
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     it 'decrements and removed jobs with 0 from workflow set' do
-      subject.save_work('baz', 'foo')
+      subject.save('baz', 'foo')
       expect(redis.zrange('test:workflows:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 4]])
     end
 
     it 'queues jobs that are ready to be processed' do
-      subject.save_work('baz', 'foo')
+      subject.save('baz', 'foo')
       expect(redis.lrange('test:queue', 0, -1)).to eq(['bar'])
     end
   end
@@ -113,7 +113,7 @@ describe Pallets::Backends::Redis do
     end
   end
 
-  describe '#retry_work' do
+  describe '#retry' do
     before do
       # Set up reliability components
       redis.lpush('test:reliability-queue', 'foo')
@@ -121,24 +121,24 @@ describe Pallets::Backends::Redis do
     end
 
     it 'removes the job from the reliability queue' do
-      subject.retry_work('foonew', 'foo', 1234)
+      subject.retry('foonew', 'foo', 1234)
       expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.retry_work('foonew', 'foo', 1234)
+      subject.retry('foonew', 'foo', 1234)
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     it 'adds the new job to the retry set' do
       Timecop.freeze do
-        subject.retry_work('foonew', 'foo', 1234)
+        subject.retry('foonew', 'foo', 1234)
         expect(redis.zrange('test:retry-queue', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
       end
     end
   end
 
-  describe '#kill_work' do
+  describe '#kill' do
     before do
       # Set up reliability components
       redis.lpush('test:reliability-queue', 'foo')
@@ -146,24 +146,24 @@ describe Pallets::Backends::Redis do
     end
 
     it 'removes the job from the reliability queue' do
-      subject.kill_work('foonew', 'foo', 1234)
+      subject.kill('foonew', 'foo', 1234)
       expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.kill_work('foonew', 'foo', 1234)
+      subject.kill('foonew', 'foo', 1234)
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     it 'adds the new job to the kill set' do
       Timecop.freeze do
-        subject.kill_work('foonew', 'foo', 1234)
+        subject.kill('foonew', 'foo', 1234)
         expect(redis.zrange('test:failed-queue', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
       end
     end
   end
 
-  describe '#reschedule_jobs' do
+  describe '#reschedule' do
     before do
       # Set up reliability components
       redis.lpush('test:reliability-queue', ['foo', 'bar'])
@@ -174,22 +174,22 @@ describe Pallets::Backends::Redis do
     end
 
     it 'queues reliability and retry jobs that are ready to be processed' do
-      subject.reschedule_jobs(500)
+      subject.reschedule(500)
       expect(redis.lrange('test:queue', 0, -1)).to contain_exactly('foo', 'baz')
     end
 
     it 'removes jobs that are ready to be processed from the reliability set' do
-      subject.reschedule_jobs(500)
+      subject.reschedule(500)
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to eq([['bar', 1000]])
     end
 
     it 'removes jobs that are ready to be processed from the reliability queue' do
-      subject.reschedule_jobs(500)
+      subject.reschedule(500)
       expect(redis.lrange('test:reliability-queue', 0, -1)).to eq(['bar'])
     end
 
     it 'removes jobs that are ready to be processed from the retry set' do
-      subject.reschedule_jobs(500)
+      subject.reschedule(500)
       expect(redis.zrange('test:retry-queue', 0, -1, with_scores: true)).to eq([['qux', 1000]])
     end
   end
