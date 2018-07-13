@@ -15,23 +15,19 @@ module Pallets
     end
 
     def graceful_shutdown
-      Pallets.logger.info "[worker #{@thread.object_id}] graceful shutdown..."
+      Pallets.logger.info "[worker #{id}] graceful shutdown..."
       @needs_to_stop = true
     end
 
     def hard_shutdown
       return unless @thread
-      Pallets.logger.info "[worker #{@thread.object_id}] hard shutdown, killing"
+      Pallets.logger.info "[worker #{id}] hard shutdown, killing"
       @thread.raise Pallets::Shutdown
-      Pallets.logger.info "[worker #{@thread.object_id}] killed"
+      Pallets.logger.info "[worker #{id}] killed"
     end
 
     def needs_to_stop?
       @needs_to_stop
-    end
-
-    def everything_ok?
-      @thread.alive?
     end
 
     def id
@@ -102,6 +98,7 @@ module Pallets
         'error_class' => ex.class.name,
         'error_message' => ex.message
       ))
+      # TODO: Have this value dynamic, configurable per task
       if failures < 15
         Pallets.logger.info "[worker #{id}] scheduling for retry"
         retry_at = Time.now.to_f + backoff_in_seconds(failures)

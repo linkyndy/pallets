@@ -3,6 +3,7 @@ module Pallets
     def initialize(manager)
       @manager = manager
       @needs_to_stop = false
+      @thread = nil
     end
 
     def start
@@ -11,20 +12,16 @@ module Pallets
     end
 
     def shutdown
-      Pallets.logger.info "[scheduler #{@thread.object_id}] shutdown..."
+      Pallets.logger.info "[scheduler #{id}] shutdown..."
       @needs_to_stop = true
 
-      Pallets.logger.info "[scheduler #{@thread.object_id}] waiting to shutdown..."
-      return if !@thread
+      Pallets.logger.info "[scheduler #{id}] waiting to shutdown..."
+      return unless @thread
       @thread.join
     end
 
     def needs_to_stop?
       @needs_to_stop
-    end
-
-    def everything_ok?
-      @thread.alive?
     end
 
     def id

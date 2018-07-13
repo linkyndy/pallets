@@ -7,7 +7,7 @@ module Pallets
         @namespace = namespace
         @blocking_timeout = blocking_timeout
         @job_timeout = job_timeout
-        @pool = Pallets::Pool.new(size: pool_size) { ::Redis.new(options) }
+        @pool = Pallets::Pool.new(pool_size) { ::Redis.new(options) }
 
         register_scripts
       end

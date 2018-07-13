@@ -23,18 +23,15 @@ describe Pallets::Scheduler do
   end
 
   describe '#shutdown' do
-    let(:thread) { instance_spy('Thread') }
-
-    before do
-      allow(Thread).to receive(:new).and_return(thread)
-    end
-
     it 'signals it needs to stop' do
       expect { subject.shutdown }.to change { subject.needs_to_stop? }.from(false).to(true)
     end
 
     context 'when started' do
+      let(:thread) { instance_spy('Thread') }
+
       before do
+        allow(Thread).to receive(:new).and_return(thread)
         subject.start
       end
 
