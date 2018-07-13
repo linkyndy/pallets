@@ -49,21 +49,24 @@ module Pallets
     end
 
     def start
-      @id ||= Pallets.generate_id(self.class.name, 'W')
-      backend.start_workflow(id, jobs_with_dependencies)
+      @running ||= begin
+        @id = Pallets.generate_id(self.class.name, 'W')
+        backend.start_workflow(@id, jobs_with_dependencies)
+        @id
+      end
     end
 
     private
 
     def jobs_with_dependencies
-      self.class.graph.sort_by_dependency_count.map do |dependency_count, node|
-        [dependency_count, serializer.dump(job_hash(node))]
+      self.class.graph.sort_by_dependency_count.map do |dependency_count, task_name|
+        [dependency_count, serializer.dump(job_hash(task_name))]
       end
     end
 
-    def job_hash(task_class)
+    def job_hash(task_name)
       {
-        'class_name' => task_class.to_s.camelize,
+        'class_name' => task_name.to_s.camelize,
         'wfid'       => id,
         'context'    => context,
         'created_at' => Time.now.to_f

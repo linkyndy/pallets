@@ -78,15 +78,12 @@ module Pallets
         end
       end
 
-      def start_workflow(wfid, jobs)
-        puts '[backend] start_workflow'
-
-        # jobs is [[1, Job], [2, Job], [2, Job]]
+      def start_workflow(wfid, jobs_with_dependencies)
         @pool.execute do |client|
           client.eval(
             @scripts['start_workflow'],
             [workflow_key(wfid), queue_key],
-            jobs
+            jobs_with_dependencies
           )
         end
       end
