@@ -12,7 +12,7 @@ module Pallets
         register_scripts
       end
 
-      def pick_work
+      def pick
         job = @pool.execute do |client|
           client.brpoplpush(queue_key, reliability_queue_key, timeout: @blocking_timeout)
         end
@@ -28,7 +28,7 @@ module Pallets
         job
       end
 
-      def save_work(wfid, job)
+      def save(wfid, job)
         @pool.execute do |client|
           client.eval(
             @scripts['save_work'],
@@ -48,27 +48,27 @@ module Pallets
         end
       end
 
-      def retry_work(job, old_job, retry_at)
+      def retry(job, old_job, at)
         @pool.execute do |client|
           client.eval(
             @scripts['retry_work'],
             [retry_queue_key, reliability_queue_key, reliability_set_key],
-            [retry_at, job, old_job]
+            [at, job, old_job]
           )
         end
       end
 
-      def kill_work(job, old_job, killed_at)
+      def kill(job, old_job, at)
         @pool.execute do |client|
           client.eval(
             @scripts['kill_work'],
             [failed_queue_key, reliability_queue_key, reliability_set_key],
-            [killed_at, job, old_job]
+            [at, job, old_job]
           )
         end
       end
 
-      def reschedule_jobs(earlier_than)
+      def reschedule(earlier_than)
         @pool.execute do |client|
           client.eval(
             @scripts['reschedule_work'],

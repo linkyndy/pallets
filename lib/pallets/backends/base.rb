@@ -1,25 +1,32 @@
 module Pallets
   module Backends
     class Base
-      def pick_work
+      def pick
+        raise NotImplementedError
       end
 
-      def save_work(wfid, job)
+      def save(wfid, job)
+        raise NotImplementedError
       end
 
       def discard(job)
+        raise NotImplementedError
       end
 
-      def retry_work(job, old_job, retry_at)
+      def retry(job, old_job, at)
+        raise NotImplementedError
       end
 
-      def kill_work(job, old_job, killed_at)
+      def kill(job, old_job, at)
+        raise NotImplementedError
       end
 
-      def reschedule_jobs(earlier_than)
+      def reschedule(earlier_than)
+        raise NotImplementedError
       end
 
-      def start_workflow(wfid, jobs)
+      def start_workflow(wfid, jobs_with_dependencies)
+        raise NotImplementedError
       end
     end
   end
