@@ -2,18 +2,16 @@ require 'spec_helper'
 
 describe Pallets::Workflow do
   let(:backend) { instance_spy('Pallets::Backends::Base') }
-  let(:workflow_class) do
-    class Foo < Pallets::Workflow
-      task :one
-      task :two => :one
-      task :three => :one
-      task :four => :two
-    end
-    Foo
-  end
   let(:context) { { foo: :bar } }
 
-  subject { workflow_class.new(context) }
+  class TestWorkflow < Pallets::Workflow
+    task :one
+    task :two => :one
+    task :three => :one
+    task :four => :two
+  end
+
+  subject { TestWorkflow.new(context) }
 
   describe '#start' do
     let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
