@@ -111,20 +111,20 @@ describe Pallets::Manager do
     end
   end
 
-  describe '#restart_worker' do
+  describe '#replace_worker' do
     it 'removes given worker' do
-      subject.restart_worker(worker)
+      subject.replace_worker(worker)
       expect(subject.workers).not_to include(worker)
     end
 
     it 'adds a new worker' do
-      subject.restart_worker(worker)
+      subject.replace_worker(worker)
       expect(subject.workers).to include(yet_another_worker)
     end
 
     it 'maintains the number of workers' do
       expect do
-        subject.restart_worker(worker)
+        subject.replace_worker(worker)
       end.not_to change { subject.workers.size }
     end
   end

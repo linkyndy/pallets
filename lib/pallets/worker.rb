@@ -65,7 +65,7 @@ module Pallets
       Pallets.logger.error "[worker #{id}] died:"
       Pallets.logger.error ex
       # Pallets.logger.error ex.backtrace
-      @manager.restart_worker(self)
+      @manager.replace_worker(self)
     end
 
     def process(job)

@@ -44,7 +44,7 @@ module Pallets
       @lock.synchronize { @workers.delete(worker) }
     end
 
-    def restart_worker(worker)
+    def replace_worker(worker)
       Pallets.logger.info "restarting worker"
       @lock.synchronize do
         @workers.delete(worker)
