@@ -36,30 +36,30 @@ module Pallets
     end
 
     def parse_options
-      # TODO: -v for verbose, -d for debug, -q for quiet, -V for version
       OptionParser.new do |opts|
         opts.banner = 'Usage: pallets [options]'
 
-        opts.on('-b', '--backend BACKEND', 'Backend to use') do |backend|
+        opts.on('-b', '--backend NAME', 'Backend to use') do |backend|
           Pallets.configuration.backend = backend
         end
 
-        opts.on('-n', '--namespace NAMESPACE', 'Namespace to use for backend') do |namespace|
+        opts.on('-n', '--namespace NAME', 'Namespace to use for backend') do |namespace|
           Pallets.configuration.namespace = namespace
         end
 
-        opts.on('-p', '--pool NUM', Integer, 'Size of backend pool') do |pool|
-          Pallets.configuration.pool_size = pool
+        opts.on('-p', '--pool-size NUM', Integer, 'Size of backend pool') do |pool_size|
+          Pallets.configuration.pool_size = pool_size
+        end
 
         opts.on('-q', '--quiet', 'Output less logs') do
           Pallets.logger.level = Logger::ERROR
         end
 
         opts.on('-r', '--require PATH', 'Path containing workflow definitions') do |path|
-          require(path) || raise(ArgumentError, "Could not require #{path}. Make sure you specify a valid path")
+          require(path)
         end
 
-        opts.on('-s', '--serializer SERIALIZER', 'Serializer to use') do |serializer|
+        opts.on('-s', '--serializer NAME', 'Serializer to use') do |serializer|
           Pallets.configuration.serializer = serializer
         end
 
