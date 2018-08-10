@@ -50,6 +50,9 @@ module Pallets
 
         opts.on('-p', '--pool NUM', Integer, 'Size of backend pool') do |pool|
           Pallets.configuration.pool_size = pool
+
+        opts.on('-q', '--quiet', 'Output less logs') do
+          Pallets.logger.level = Logger::ERROR
         end
 
         opts.on('-r', '--require PATH', 'Path containing workflow definitions') do |path|
@@ -62,6 +65,10 @@ module Pallets
 
         opts.on('-u', '--blocking-timeout NUM', Integer, 'Seconds to block while waiting for work') do |blocking_timeout|
           Pallets.configuration.blocking_timeout = blocking_timeout
+        end
+
+        opts.on('-v', '--verbose', 'Output more logs') do
+          Pallets.logger.level = Logger::DEBUG
         end
 
         opts.on('--version', 'Version of Pallets') do
