@@ -14,6 +14,13 @@ module Pallets
         # Handle nils, symbols or arrays consistently
         dependencies = Array(depends_on).compact
         graph.add(name, dependencies)
+
+        max_failures = options[:max_failures] || Pallets.configuration.max_failures
+
+        task_config[name.to_s] = {
+          'max_failures' => max_failures
+        }
+
         nil
       end
     end

@@ -17,6 +17,7 @@ describe Pallets::Workflow do
     let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
 
     before do
+      allow(Pallets.configuration).to receive(:max_failures).and_return(3)
       allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:serializer).and_return(serializer)
     end
@@ -29,7 +30,8 @@ describe Pallets::Workflow do
             'class_name' => task_class_name,
             'wfid' => a_kind_of(String),
             'context' => { foo: :bar },
-            'created_at' => Time.now.to_f
+            'created_at' => Time.now.to_f,
+            'max_failures' => 3
           })
         end
       end

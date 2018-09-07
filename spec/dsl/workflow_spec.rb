@@ -4,10 +4,13 @@ describe Pallets::DSL::Workflow do
   # Set the subject to class that extends the DSL
   subject { Class.new { extend Pallets::DSL::Workflow } }
 
+  let(:task_config) { {} }
   let(:graph) { instance_spy('Pallets::Graph') }
 
   before do
+    allow(Pallets.configuration).to receive(:max_failures).and_return(3)
     # Stub external calls so we can test the DSL in isolation
+    allow(subject).to receive(:task_config).and_return(task_config)
     allow(subject).to receive(:graph).and_return(graph)
   end
 
@@ -70,6 +73,20 @@ describe Pallets::DSL::Workflow do
     it "adds a task to the workflow's graph" do
       subject.class_eval { task :one }
       expect(graph).to have_received(:add).with(any_args)
+    end
+
+    context 'with a :max_failures option provided' do
+      it 'configures the task with the given value' do
+        subject.class_eval { task :pay, max_failures: 1 }
+        expect(subject.task_config).to match('pay' => { 'max_failures' => 1 })
+      end
+    end
+
+    context 'without a :max_failures option provided' do
+      it 'configures the task with a default value' do
+        subject.class_eval { task :pay }
+        expect(subject.task_config).to match('pay' => { 'max_failures' => 3 })
+      end
     end
 
     it 'returns nil' do

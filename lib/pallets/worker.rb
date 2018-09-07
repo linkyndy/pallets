@@ -98,8 +98,7 @@ module Pallets
         'error_class' => ex.class.name,
         'error_message' => ex.message
       ))
-      # TODO: Have this value dynamic, configurable per task
-      if failures < 15
+      if failures < job_hash['max_failures']
         Pallets.logger.info "[worker #{id}] scheduling for retry"
         retry_at = Time.now.to_f + backoff_in_seconds(failures)
         backend.retry(new_job, job, retry_at)

@@ -70,7 +70,7 @@ module Pallets
         'wfid'       => id,
         'context'    => context,
         'created_at' => Time.now.to_f
-      }
+      }.merge(self.class.task_config[task_name])
     end
 
     def backend
@@ -79,6 +79,10 @@ module Pallets
 
     def serializer
       Pallets.serializer
+    end
+
+    def self.task_config
+      @task_config ||= {}
     end
 
     def self.graph

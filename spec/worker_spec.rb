@@ -251,7 +251,8 @@ describe Pallets::Worker do
       {
         'class_name' => 'Foo',
         'context' => { bar: :baz },
-        'wfid' => 'qux'
+        'wfid' => 'qux',
+        'max_failures' => 15
       }
     end
 
@@ -280,6 +281,7 @@ describe Pallets::Worker do
           'class_name' => 'Foo',
           'context' => { bar: :baz },
           'wfid' => 'qux',
+          'max_failures' => 15,
           'failures' => 1,
           'failed_at' => Time.now.to_f,
           'error_class' => 'KeyError',
@@ -317,6 +319,7 @@ describe Pallets::Worker do
           'class_name' => 'Foo',
           'context' => { bar: :baz },
           'wfid' => 'qux',
+          'max_failures' => 15,
           'failures' => 15,
           'failed_at' => Time.now.to_f,
           'error_class' => 'KeyError',
