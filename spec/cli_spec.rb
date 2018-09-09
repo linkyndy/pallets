@@ -12,6 +12,17 @@ describe Pallets::CLI do
     end
   end
 
+  context 'with --concurrency provided' do
+    before do
+      stub_const('ARGV', ['--concurrency=123'])
+    end
+
+    it 'sets the given concurrency' do
+      subject
+      expect(Pallets.configuration.concurrency).to eq(123)
+    end
+  end
+
   context 'with --max-failures provided' do
     before do
       stub_const('ARGV', ['--max-failures=123'])

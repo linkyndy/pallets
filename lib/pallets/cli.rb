@@ -43,6 +43,10 @@ module Pallets
           Pallets.configuration.backend = backend
         end
 
+        opts.on('-c', '--concurrency NUM', Integer, 'Number of workers to start') do |concurrency|
+          Pallets.configuration.concurrency = concurrency
+        end
+
         opts.on('-f', '--max-failures NUM', Integer, 'Maximum allowed number of failures per task') do |max_failures|
           Pallets.configuration.max_failures = max_failures
         end
