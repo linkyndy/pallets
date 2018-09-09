@@ -72,7 +72,7 @@ describe Pallets::DSL::Workflow do
 
     it "adds a task to the workflow's graph" do
       subject.class_eval { task :one }
-      expect(graph).to have_received(:add).with(any_args)
+      expect(graph).to have_received(:add).with(:one, a_kind_of(Array))
     end
 
     context 'with a :max_failures option provided' do
