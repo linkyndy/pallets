@@ -12,6 +12,17 @@ describe Pallets::CLI do
     end
   end
 
+  context 'with --max-failures provided' do
+    before do
+      stub_const('ARGV', ['--max-failures=123'])
+    end
+
+    it 'sets the given max failures' do
+      subject
+      expect(Pallets.configuration.max_failures).to eq(123)
+    end
+  end
+
   context 'with --namespace provided' do
     before do
       stub_const('ARGV', ['--namespace=foo'])

@@ -43,6 +43,10 @@ module Pallets
           Pallets.configuration.backend = backend
         end
 
+        opts.on('-f', '--max-failures NUM', Integer, 'Maximum allowed number of failures per task') do |max_failures|
+          Pallets.configuration.max_failures = max_failures
+        end
+
         opts.on('-n', '--namespace NAME', 'Namespace to use for backend') do |namespace|
           Pallets.configuration.namespace = namespace
         end
