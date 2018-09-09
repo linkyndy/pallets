@@ -12,12 +12,13 @@ module Pallets
         end
         raise ArgumentError, "A task must have a name" unless name
         # Handle nils, symbols or arrays consistently
-        dependencies = Array(depends_on).compact
+        name = name.to_sym
+        dependencies = Array(depends_on).compact.map(&:to_sym)
         graph.add(name, dependencies)
 
         max_failures = options[:max_failures] || Pallets.configuration.max_failures
 
-        task_config[name.to_s] = {
+        task_config[name] = {
           'max_failures' => max_failures
         }
 
