@@ -44,9 +44,9 @@ module Pallets
     end
 
     def wait_a_bit
+      # Wait for roughly 10 seconds
       # We don't want to block the entire polling interval, since we want to
       # deal with shutdowns synchronously and as fast as possible
-      # TODO: Extract value to config
       10.times do
         break if needs_to_stop?
         sleep 1
