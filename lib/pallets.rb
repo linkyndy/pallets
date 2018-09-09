@@ -52,10 +52,4 @@ module Pallets
   def self.logger
     @logger ||= Logger.new(STDOUT)
   end
-
-  def self.generate_id(string, prefix='')
-    initials = string.gsub(/[^A-Z]+([A-Z])/, '\1')[0,3]
-    random = SecureRandom.hex(3)
-    "#{prefix}#{initials}#{random}".upcase
-  end
 end

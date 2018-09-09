@@ -31,7 +31,7 @@ module Pallets
     end
 
     def id
-      @thread.object_id if @thread
+      "W#{@thread.object_id.to_s(36)}".upcase if @thread
     end
 
     private

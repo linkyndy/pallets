@@ -52,15 +52,15 @@ describe Pallets::Worker do
 
   describe '#id' do
     context 'when started' do
-      let(:thread) { instance_spy('Thread', object_id: 'foobar') }
+      let(:thread) { instance_spy('Thread', object_id: 1234) }
 
       before do
         allow(Thread).to receive(:new).and_return(thread)
         subject.start
       end
 
-      it 'returns the thread id' do
-        expect(subject.id).to eq('foobar')
+      it 'returns an ID following a specific pattern' do
+        expect(subject.id).to match(/W\w+/)
       end
     end
 

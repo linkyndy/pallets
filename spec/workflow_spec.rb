@@ -13,6 +13,12 @@ describe Pallets::Workflow do
 
   subject { TestWorkflow.new(context) }
 
+  describe '#id' do
+    it 'returns an ID following a specific pattern' do
+      expect(subject.id).to match(/PTWO\h{10}/)
+    end
+  end
+
   describe '#start' do
     let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
 

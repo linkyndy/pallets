@@ -41,7 +41,7 @@ module Pallets
   class Workflow
     extend DSL::Workflow
 
-    attr_reader :id, :context
+    attr_reader :context
 
     def initialize(context = {})
       @id = nil
@@ -50,9 +50,15 @@ module Pallets
 
     def start
       @running ||= begin
-        @id = Pallets.generate_id(self.class.name, 'W')
-        backend.start_workflow(@id, jobs_with_dependencies)
-        @id
+        backend.start_workflow(id, jobs_with_dependencies)
+      end
+    end
+
+    def id
+      @id ||= begin
+        initials = self.class.name.gsub(/[^A-Z]+([A-Z])/, '\1')[0,3]
+        random = SecureRandom.hex(5)
+        "P#{initials}#{random}".upcase
       end
     end
 
