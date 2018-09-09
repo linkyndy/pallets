@@ -3,11 +3,11 @@ require 'optparse'
 module Pallets
   class CLI
     def initialize
-      @manager = Manager.new
-      @signal_queue = Queue.new
-
       parse_options
       setup_signal_handlers
+
+      @manager = Manager.new
+      @signal_queue = Queue.new
     end
 
     def run

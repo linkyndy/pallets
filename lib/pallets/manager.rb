@@ -2,11 +2,9 @@ module Pallets
   class Manager
     attr_reader :workers, :timeout
 
-    # TODO: Extract arguments to config
-    def initialize(workers: 2, timeout: 7)
-      @workers = workers.times.map { Worker.new(self) }
+    def initialize(concurrency: Pallets.configuration.concurrency)
+      @workers = concurrency.times.map { Worker.new(self) }
       @scheduler = Scheduler.new(self)
-      @timeout = timeout
       @lock = Mutex.new
       @needs_to_stop = false
     end
@@ -28,7 +26,8 @@ module Pallets
       @scheduler.shutdown
 
       Pallets.logger.info 'Waiting for workers to finish their jobs...'
-      @timeout.times do
+      # Wait for 10 seconds at most
+      10.times do
         return if @workers.empty?
         sleep 1
       end
