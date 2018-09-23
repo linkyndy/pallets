@@ -16,9 +16,11 @@ module Pallets
         dependencies = Array(depends_on).compact.map(&:to_sym)
         graph.add(name, dependencies)
 
+        class_name = options[:class_name] || name.to_s.camelize
         max_failures = options[:max_failures] || Pallets.configuration.max_failures
 
         task_config[name] = {
+          'class_name' => class_name,
           'max_failures' => max_failures
         }
 

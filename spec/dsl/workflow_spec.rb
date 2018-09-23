@@ -75,17 +75,39 @@ describe Pallets::DSL::Workflow do
       expect(graph).to have_received(:add).with(:one, a_kind_of(Array))
     end
 
+    context 'with a :class_name option provided' do
+      it 'configures the task with the given value' do
+        subject.class_eval { task :pay, class_name: 'Foo' }
+        expect(subject.task_config).to match(
+          pay: a_hash_including('class_name' => 'Foo')
+        )
+      end
+    end
+
+    context 'without a :class_name option provided' do
+      it 'configures the task with a default value' do
+        subject.class_eval { task :pay }
+        expect(subject.task_config).to match(
+          pay: a_hash_including('class_name' => 'Pay')
+        )
+      end
+    end
+
     context 'with a :max_failures option provided' do
       it 'configures the task with the given value' do
         subject.class_eval { task :pay, max_failures: 1 }
-        expect(subject.task_config).to match('pay' => { 'max_failures' => 1 })
+        expect(subject.task_config).to match(
+          pay: a_hash_including('max_failures' => 1)
+        )
       end
     end
 
     context 'without a :max_failures option provided' do
       it 'configures the task with a default value' do
         subject.class_eval { task :pay }
-        expect(subject.task_config).to match('pay' => { 'max_failures' => 3 })
+        expect(subject.task_config).to match(
+          pay: a_hash_including('max_failures' => 3)
+        )
       end
     end
 
