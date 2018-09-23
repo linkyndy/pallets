@@ -21,18 +21,32 @@ describe Pallets::Graph do
     end
   end
 
-  describe '#sort_by_dependency_count' do
-    before do
-      subject.add(:one,   [])
-      subject.add(:two,   [:one])
-      subject.add(:three, [:one])
-      subject.add(:four,  [:two])
+  describe '#sorted_with_order' do
+    let(:graph) do
+      Pallets::Graph.new.tap do |g|
+        g.add(:one,   [])
+        g.add(:two,   [:one])
+        g.add(:three, [:one])
+        g.add(:four,  [:two])
+      end
     end
 
     it 'returns a properly formatted Array' do
-      expect(subject.sort_by_dependency_count).to eq([
-        [0, :one], [1, :two], [1, :three], [3, :four]
+      expect(graph.sorted_with_order).to eq([
+        [:one, 0], [:two, 1], [:three, 1], [:four, 3]
       ])
+    end
+
+    context 'with a dependency that is not defined' do
+      let(:graph) do
+        Pallets::Graph.new.tap do |g|
+          g.add(:one, [:two])
+        end
+      end
+
+      it 'raises a KeyError' do
+        expect { graph.sorted_with_order }.to raise_error(KeyError)
+      end
     end
   end
 end

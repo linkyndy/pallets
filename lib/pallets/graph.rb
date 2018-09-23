@@ -16,16 +16,18 @@ module Pallets
       @nodes[node]
     end
 
-    # Assigns indices to list of nodes, groups them together by parent, then
-    # uses the first index for each group. Results in a list of node groups that
-    # have the number of dependencies associated before when they can be safely
-    # executed
-    def sort_by_dependency_count
-      groups = tsort_each.with_index.slice_when do |(a, _), (b, _)|
-        parents(a) != parents(b)
-      end.flat_map do |group|
-        count = group.first[1]
-        group.map { |item| [count, item[0]] }
+    # Returns nodes topologically sorted, together with their order (number of
+    # nodes that have to be executed prior)
+    def sorted_with_order
+      # Identify groups of nodes that can be executed concurrently
+      groups = tsort_each.slice_when { |a, b| parents(a) != parents(b) }
+
+      # Assign order to each node
+      i = 0
+      groups.flat_map do |group|
+        group_with_order = group.product([i])
+        i += group.size
+        group_with_order
       end
     end
 
@@ -36,7 +38,7 @@ module Pallets
     end
 
     def tsort_each_child(node, &block)
-      @nodes[node].each(&block)
+      @nodes.fetch(node).each(&block)
     end
   end
 end
