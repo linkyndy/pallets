@@ -9,12 +9,19 @@ module Pallets
         @job_timeout = job_timeout
         @pool = Pallets::Pool.new(pool_size) { ::Redis.new(options) }
 
+        @queue_key = "#{namespace}:queue"
+        @reliability_queue_key = "#{namespace}:reliability-queue"
+        @reliability_set_key = "#{namespace}:reliability-set"
+        @retry_set_key = "#{namespace}:retry-set"
+        @fail_set_key = "#{namespace}:fail-set"
+        @workflow_key = "#{namespace}:workflows:%s"
+
         register_scripts
       end
 
       def pick
         job = @pool.execute do |client|
-          client.brpoplpush(queue_key, reliability_queue_key, timeout: @blocking_timeout)
+          client.brpoplpush(@queue_key, @reliability_queue_key, timeout: @blocking_timeout)
         end
         if job
           # We store the job's timeout so we know when to retry jobs that are
@@ -22,17 +29,17 @@ module Pallets
           # no other way to atomically BRPOPLPUSH from the main queue to a
           # sorted set
           @pool.execute do |client|
-            client.zadd(reliability_set_key, Time.now.to_f + @job_timeout, job)
+            client.zadd(@reliability_set_key, Time.now.to_f + @job_timeout, job)
           end
         end
         job
       end
 
-      def save(wfid, job)
+      def save(workflow_id, job)
         @pool.execute do |client|
           client.eval(
-            @scripts['save_work'],
-            [workflow_key(wfid), queue_key, reliability_queue_key, reliability_set_key],
+            @scripts['save'],
+            [@workflow_key % workflow_id, @queue_key, @reliability_queue_key, @reliability_set_key],
             [job]
           )
         end
@@ -41,8 +48,8 @@ module Pallets
       def discard(job)
         @pool.execute do |client|
           client.eval(
-            @scripts['discard_work'],
-            [reliability_queue_key, reliability_set_key],
+            @scripts['discard'],
+            [@reliability_queue_key, @reliability_set_key],
             [job]
           )
         end
@@ -51,68 +58,44 @@ module Pallets
       def retry(job, old_job, at)
         @pool.execute do |client|
           client.eval(
-            @scripts['retry_work'],
-            [retry_queue_key, reliability_queue_key, reliability_set_key],
+            @scripts['retry'],
+            [@retry_set_key, @reliability_queue_key, @reliability_set_key],
             [at, job, old_job]
           )
         end
       end
 
-      def kill(job, old_job, at)
+      def give_up(job, old_job, at)
         @pool.execute do |client|
           client.eval(
-            @scripts['kill_work'],
-            [failed_queue_key, reliability_queue_key, reliability_set_key],
+            @scripts['give_up'],
+            [@fail_set_key, @reliability_queue_key, @reliability_set_key],
             [at, job, old_job]
           )
         end
       end
 
-      def reschedule(earlier_than)
+      def reschedule_all(earlier_than)
         @pool.execute do |client|
           client.eval(
-            @scripts['reschedule_work'],
-            [reliability_set_key, reliability_queue_key, retry_queue_key, queue_key],
+            @scripts['reschedule_all'],
+            [@reliability_set_key, @reliability_queue_key, @retry_set_key, @queue_key],
             [earlier_than]
           )
         end
       end
 
-      def start_workflow(wfid, jobs_with_dependencies)
+      def run_workflow(workflow_id, jobs_with_order)
         @pool.execute do |client|
           client.eval(
-            @scripts['start_workflow'],
-            [workflow_key(wfid), queue_key],
-            jobs_with_dependencies
+            @scripts['run_workflow'],
+            [@workflow_key % workflow_id, @queue_key],
+            jobs_with_order
           )
         end
       end
 
       private
-
-      def queue_key
-        "#{@namespace}:queue"
-      end
-
-      def reliability_queue_key
-        "#{@namespace}:reliability-queue"
-      end
-
-      def reliability_set_key
-        "#{@namespace}:reliability-set"
-      end
-
-      def retry_queue_key
-        "#{@namespace}:retry-queue"
-      end
-
-      def failed_queue_key
-        "#{@namespace}:failed-queue"
-      end
-
-      def workflow_key(wfid)
-        "#{@namespace}:workflows:#{wfid}"
-      end
 
       def register_scripts
         @scripts ||= Dir["#{__dir__}/scripts/*.lua"].map do |file|

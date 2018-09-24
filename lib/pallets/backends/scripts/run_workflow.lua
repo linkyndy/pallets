@@ -1,5 +1,6 @@
 -- Add all jobs to sorted set
 redis.call("ZADD", KEYS[1], unpack(ARGV))
+
 -- Queue jobs that are ready to be processed (their score is 0) and
 -- remove queued jobs from the sorted set
 local count = redis.call("ZCOUNT", KEYS[1], 0, 0)

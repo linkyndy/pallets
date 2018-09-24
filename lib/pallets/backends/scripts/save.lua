@@ -2,7 +2,7 @@
 redis.call("LREM", KEYS[3], 0, ARGV[1])
 redis.call("ZREM", KEYS[4], ARGV[1])
 
--- Deincrement all jobs from the sorted set
+-- Decrement all jobs from the sorted set
 local all_pending = redis.call("ZRANGE", KEYS[1], 0, -1)
 for score, task in pairs(all_pending) do
   redis.call("ZINCRBY", KEYS[1], -1, task)

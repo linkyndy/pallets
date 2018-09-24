@@ -35,7 +35,7 @@ module Pallets
         break if needs_to_stop?
 
         Pallets.logger.info "[scheduler #{id}] scheduling"
-        backend.reschedule(Time.now.to_f)
+        backend.reschedule_all(Time.now.to_f)
         Pallets.logger.info "[scheduler #{id}] done scheduling"
 
         wait_a_bit

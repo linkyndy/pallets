@@ -5,7 +5,7 @@ module Pallets
         raise NotImplementedError
       end
 
-      def save(wfid, job)
+      def save(workflow_id, job)
         raise NotImplementedError
       end
 
@@ -17,15 +17,15 @@ module Pallets
         raise NotImplementedError
       end
 
-      def kill(job, old_job, at)
+      def give_up(job, old_job, at)
         raise NotImplementedError
       end
 
-      def reschedule(earlier_than)
+      def reschedule_all(earlier_than)
         raise NotImplementedError
       end
 
-      def start_workflow(wfid, jobs_with_dependencies)
+      def run_workflow(workflow_id, jobs_with_dependencies)
         raise NotImplementedError
       end
     end

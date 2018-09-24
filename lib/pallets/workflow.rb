@@ -48,10 +48,9 @@ module Pallets
       @context = context
     end
 
-    def start
-      @running ||= begin
-        backend.start_workflow(id, jobs_with_dependencies)
-      end
+    def run
+      backend.run_workflow(id, jobs_with_order)
+      id
     end
 
     def id

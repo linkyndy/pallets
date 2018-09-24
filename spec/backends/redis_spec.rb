@@ -133,12 +133,12 @@ describe Pallets::Backends::Redis do
     it 'adds the new job to the retry set' do
       Timecop.freeze do
         subject.retry('foonew', 'foo', 1234)
-        expect(redis.zrange('test:retry-queue', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
+        expect(redis.zrange('test:retry-set', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
       end
     end
   end
 
-  describe '#kill' do
+  describe '#give_up' do
     before do
       # Set up reliability components
       redis.lpush('test:reliability-queue', 'foo')
@@ -146,62 +146,62 @@ describe Pallets::Backends::Redis do
     end
 
     it 'removes the job from the reliability queue' do
-      subject.kill('foonew', 'foo', 1234)
+      subject.give_up('foonew', 'foo', 1234)
       expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.kill('foonew', 'foo', 1234)
+      subject.give_up('foonew', 'foo', 1234)
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    it 'adds the new job to the kill set' do
+    it 'adds the new job to the fail set' do
       Timecop.freeze do
-        subject.kill('foonew', 'foo', 1234)
-        expect(redis.zrange('test:failed-queue', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
+        subject.give_up('foonew', 'foo', 1234)
+        expect(redis.zrange('test:fail-set', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
       end
     end
   end
 
-  describe '#reschedule' do
+  describe '#reschedule_all' do
     before do
       # Set up reliability components
       redis.lpush('test:reliability-queue', ['foo', 'bar'])
       redis.zadd('test:reliability-set', [[123, 'foo'], [1000, 'bar']])
 
       # Set up retry component
-      redis.zadd('test:retry-queue', [[123, 'baz'], [1000, 'qux']])
+      redis.zadd('test:retry-set', [[123, 'baz'], [1000, 'qux']])
     end
 
     it 'queues reliability and retry jobs that are ready to be processed' do
-      subject.reschedule(500)
+      subject.reschedule_all(500)
       expect(redis.lrange('test:queue', 0, -1)).to contain_exactly('foo', 'baz')
     end
 
     it 'removes jobs that are ready to be processed from the reliability set' do
-      subject.reschedule(500)
+      subject.reschedule_all(500)
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to eq([['bar', 1000]])
     end
 
     it 'removes jobs that are ready to be processed from the reliability queue' do
-      subject.reschedule(500)
+      subject.reschedule_all(500)
       expect(redis.lrange('test:reliability-queue', 0, -1)).to eq(['bar'])
     end
 
     it 'removes jobs that are ready to be processed from the retry set' do
-      subject.reschedule(500)
-      expect(redis.zrange('test:retry-queue', 0, -1, with_scores: true)).to eq([['qux', 1000]])
+      subject.reschedule_all(500)
+      expect(redis.zrange('test:retry-set', 0, -1, with_scores: true)).to eq([['qux', 1000]])
     end
   end
 
-  describe '#start_workflow' do
+  describe '#run_workflow' do
     it 'adds pending jobs to workflow set' do
-      subject.start_workflow('baz', [[0, 'foo'], [1, 'bar']])
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']])
       expect(redis.zrange('test:workflows:baz', 0, -1, with_scores: true)).to eq([['bar', 1]])
     end
 
     it 'queues jobs that are ready to be processed' do
-      subject.start_workflow('baz', [[0, 'foo'], [1, 'bar']])
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']])
       expect(redis.lrange('test:queue', 0, -1)).to eq(['foo'])
     end
   end

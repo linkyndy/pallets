@@ -19,7 +19,7 @@ describe Pallets::Workflow do
     end
   end
 
-  describe '#start' do
+  describe '#run' do
     let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
 
     before do
@@ -30,7 +30,7 @@ describe Pallets::Workflow do
 
     it 'builds a job for each task and uses the serializer to dump it' do
       Timecop.freeze do
-        subject.start
+        subject.run
         %w(One Two Three Four).each do |task_class_name|
           expect(serializer).to have_received(:dump).with({
             'class_name' => task_class_name,
@@ -43,10 +43,10 @@ describe Pallets::Workflow do
       end
     end
 
-    it 'tells the backend to start the workflow' do
+    it 'tells the backend to run the workflow' do
       Timecop.freeze do
-        subject.start
-        expect(backend).to have_received(:start_workflow).with(a_kind_of(String), [
+        subject.run
+        expect(backend).to have_received(:run_workflow).with(a_kind_of(String), [
           [0, 'foobar'], [1, 'foobar'], [1, 'foobar'], [3, 'foobar']
         ])
       end

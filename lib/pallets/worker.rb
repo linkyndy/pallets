@@ -84,7 +84,7 @@ module Pallets
         handle_job_error(ex, job, job_hash)
       else
         Pallets.logger.info "[worker #{id}] saving work"
-        backend.save(job_hash["wfid"], job)
+        backend.save(job_hash["workflow_id"], job)
       end
     end
 
@@ -104,7 +104,7 @@ module Pallets
         backend.retry(new_job, job, retry_at)
       else
         Pallets.logger.info "[worker #{id}] killing"
-        backend.kill(new_job, job, Time.now.to_f)
+        backend.give_up(new_job, job, Time.now.to_f)
       end
     end
 
