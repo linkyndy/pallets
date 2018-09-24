@@ -63,19 +63,19 @@ module Pallets
 
     private
 
-    def jobs_with_dependencies
-      self.class.graph.sort_by_dependency_count.map do |dependency_count, task_name|
-        [dependency_count, serializer.dump(job_hash(task_name))]
+    def jobs_with_order
+      self.class.graph.sorted_with_order.map do |task_name, order|
+        job = serializer.dump(job_hash.merge(self.class.task_config[task_name]))
+        [order, job]
       end
     end
 
-    def job_hash(task_name)
+    def job_hash
       {
-        'class_name' => task_name.to_s.camelize,
-        'wfid'       => id,
-        'context'    => context,
-        'created_at' => Time.now.to_f
-      }.merge(self.class.task_config[task_name])
+        'workflow_id' => id,
+        'context'     => context,
+        'created_at'  => Time.now.to_f
+      }
     end
 
     def backend

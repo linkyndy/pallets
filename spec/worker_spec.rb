@@ -160,9 +160,9 @@ describe Pallets::Worker do
     let(:job) { double }
     let(:job_hash) do
       {
-        'class_name' => 'Foo',
         'context' => { bar: :baz },
-        'wfid' => 'qux'
+        'workflow_id' => 'qux',
+        'class_name' => 'Foo',
       }
     end
     let(:task_class) { class_double('Foo').as_stubbed_const }
@@ -249,9 +249,9 @@ describe Pallets::Worker do
     let(:job) { double }
     let(:job_hash) do
       {
-        'class_name' => 'Foo',
+        'workflow_id' => 'qux',
         'context' => { bar: :baz },
-        'wfid' => 'qux',
+        'class_name' => 'Foo',
         'max_failures' => 15
       }
     end
@@ -278,9 +278,9 @@ describe Pallets::Worker do
     context 'with previous failures' do
       let(:job_hash) do
         {
-          'class_name' => 'Foo',
           'context' => { bar: :baz },
-          'wfid' => 'qux',
+          'workflow_id' => 'qux',
+          'class_name' => 'Foo',
           'max_failures' => 15,
           'failures' => 1,
           'failed_at' => Time.now.to_f,
@@ -316,9 +316,9 @@ describe Pallets::Worker do
     context 'with the number of failures exceeding the threshold' do
       let(:job_hash) do
         {
-          'class_name' => 'Foo',
+          'workflow_id' => 'qux',
           'context' => { bar: :baz },
-          'wfid' => 'qux',
+          'class_name' => 'Foo',
           'max_failures' => 15,
           'failures' => 15,
           'failed_at' => Time.now.to_f,

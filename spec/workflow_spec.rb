@@ -33,10 +33,10 @@ describe Pallets::Workflow do
         subject.run
         %w(One Two Three Four).each do |task_class_name|
           expect(serializer).to have_received(:dump).with({
-            'class_name' => task_class_name,
-            'wfid' => a_kind_of(String),
+            'workflow_id' => a_kind_of(String),
             'context' => { foo: :bar },
             'created_at' => Time.now.to_f,
+            'class_name' => task_class_name,
             'max_failures' => 3
           })
         end
