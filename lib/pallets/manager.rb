@@ -39,12 +39,10 @@ module Pallets
     end
 
     def remove_worker(worker)
-      Pallets.logger.info "removing worker"
       @lock.synchronize { @workers.delete(worker) }
     end
 
     def replace_worker(worker)
-      Pallets.logger.info "restarting worker"
       @lock.synchronize do
         @workers.delete(worker)
 

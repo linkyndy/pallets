@@ -11,6 +11,7 @@ module Pallets
           options.first
         end
         raise ArgumentError, "A task must have a name" unless name
+
         # Handle nils, symbols or arrays consistently
         name = name.to_sym
         dependencies = Array(depends_on).compact.map(&:to_sym)

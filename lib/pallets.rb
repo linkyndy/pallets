@@ -15,9 +15,7 @@ require 'pallets/task'
 require 'pallets/worker'
 require 'pallets/workflow'
 
-# TODO: this needs to be removed!
 require 'active_support/inflector'
-require 'pry-byebug'
 require 'logger'
 
 module Pallets

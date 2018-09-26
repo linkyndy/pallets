@@ -7,15 +7,12 @@ module Pallets
     end
 
     def start
-      Pallets.logger.info "[scheduler] starting"
       @thread ||= Thread.new { work }
     end
 
     def shutdown
-      Pallets.logger.info "[scheduler #{id}] shutdown..."
       @needs_to_stop = true
 
-      Pallets.logger.info "[scheduler #{id}] waiting to shutdown..."
       return unless @thread
       @thread.join
     end
@@ -34,13 +31,9 @@ module Pallets
       loop do
         break if needs_to_stop?
 
-        Pallets.logger.info "[scheduler #{id}] scheduling"
         backend.reschedule_all(Time.now.to_f)
-        Pallets.logger.info "[scheduler #{id}] done scheduling"
-
         wait_a_bit
       end
-      Pallets.logger.info "[scheduler #{id}] done"
     end
 
     def wait_a_bit
