@@ -1,6 +1,30 @@
 require 'spec_helper'
 
 describe Pallets::CLI do
+  # Stub the global state so we can test what values are set, while allowing
+  # the CLI to read the default values
+  let(:configuration) do
+    instance_spy('Pallets::Configuration',
+      backend: :redis,
+      backend_args: {},
+      blocking_timeout: 5,
+      concurrency: 2,
+      job_timeout: 1800, # 30 minutes
+      max_failures: 3,
+      namespace: 'pallets',
+      pool_size: 5,
+      serializer: :json
+    )
+  end
+  let(:logger) do
+    instance_spy('Pallets::Logger', level: Logger::FATAL)
+  end
+
+  before do
+    allow(Pallets).to receive(:configuration).and_return(configuration)
+    allow(Pallets).to receive(:logger).and_return(logger)
+  end
+
   context 'with --backend provided' do
     before do
       stub_const('ARGV', ['--backend=foo'])
@@ -8,7 +32,7 @@ describe Pallets::CLI do
 
     it 'sets the given backend' do
       subject
-      expect(Pallets.configuration.backend).to eq('foo')
+      expect(configuration).to have_received(:backend=).with('foo')
     end
   end
 
@@ -19,7 +43,7 @@ describe Pallets::CLI do
 
     it 'sets the given concurrency' do
       subject
-      expect(Pallets.configuration.concurrency).to eq(123)
+      expect(configuration).to have_received(:concurrency=).with(123)
     end
   end
 
@@ -30,7 +54,7 @@ describe Pallets::CLI do
 
     it 'sets the given max failures' do
       subject
-      expect(Pallets.configuration.max_failures).to eq(123)
+      expect(configuration).to have_received(:max_failures=).with(123)
     end
   end
 
@@ -41,7 +65,7 @@ describe Pallets::CLI do
 
     it 'sets the given namespace' do
       subject
-      expect(Pallets.configuration.namespace).to eq('foo')
+      expect(configuration).to have_received(:namespace=).with('foo')
     end
   end
 
@@ -52,7 +76,7 @@ describe Pallets::CLI do
 
     it 'sets the given pool size' do
       subject
-      expect(Pallets.configuration.pool_size).to eq(123)
+      expect(configuration).to have_received(:pool_size=).with(123)
     end
   end
 
@@ -63,7 +87,7 @@ describe Pallets::CLI do
 
     it 'sets the ERROR logging level' do
       subject
-      expect(Pallets.logger.level).to eq(Logger::ERROR)
+      expect(logger).to have_received(:level=).with(Logger::ERROR)
     end
   end
 
@@ -96,7 +120,7 @@ describe Pallets::CLI do
 
     it 'sets the given serializer' do
       subject
-      expect(Pallets.configuration.serializer).to eq('foo')
+      expect(configuration).to have_received(:serializer=).with('foo')
     end
   end
 
@@ -107,7 +131,7 @@ describe Pallets::CLI do
 
     it 'sets the given blocking timeout' do
       subject
-      expect(Pallets.configuration.blocking_timeout).to eq(123)
+      expect(configuration).to have_received(:blocking_timeout=).with(123)
     end
   end
 
@@ -118,7 +142,7 @@ describe Pallets::CLI do
 
     it 'sets the DEBUG logging level' do
       subject
-      expect(Pallets.logger.level).to eq(Logger::DEBUG)
+      expect(logger).to have_received(:level=).with(Logger::DEBUG)
     end
   end
 
