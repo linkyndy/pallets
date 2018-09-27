@@ -6,6 +6,10 @@ describe Pallets::Pool do
     expect(pool.size).to eq(10)
   end
 
+  it 'raises an error if no block is provided' do
+    expect { Pallets::Pool.new(10) }.to raise_error(ArgumentError)
+  end
+
   describe '#execute' do
     subject { Pallets::Pool.new(1) { :foo } }
 

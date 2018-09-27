@@ -1,6 +1,8 @@
 module Pallets
   class Pool
     def initialize(size)
+      raise ArgumentError, 'Pool needs a block to initialize' unless block_given?
+
       @queue = Queue.new
       @size = size
       size.times { @queue << yield }
