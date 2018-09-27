@@ -5,10 +5,10 @@ describe Pallets::Workflow do
   let(:context) { { foo: :bar } }
 
   class TestWorkflow < Pallets::Workflow
-    task :one
-    task :two => :one
-    task :three => :one
-    task :four => :two
+    task :foo
+    task :bar => :foo
+    task :baz => :foo
+    task :qux => :bar
   end
 
   subject { TestWorkflow.new(context) }
@@ -31,7 +31,7 @@ describe Pallets::Workflow do
     it 'builds a job for each task and uses the serializer to dump it' do
       Timecop.freeze do
         subject.run
-        %w(One Two Three Four).each do |task_class_name|
+        %w(Foo Bar Baz Qux).each do |task_class_name|
           expect(serializer).to have_received(:dump).with({
             'workflow_id' => a_kind_of(String),
             'context' => { foo: :bar },

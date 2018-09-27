@@ -3,20 +3,20 @@ require 'spec_helper'
 describe Pallets::Graph do
   describe '#parents' do
     before do
-      subject.add(:one,   [])
-      subject.add(:two,   [:one])
-      subject.add(:three, [:one])
+      subject.add(:foo, [])
+      subject.add(:bar, [:foo])
+      subject.add(:baz, [:foo])
     end
 
     context 'for root node' do
       it 'returns an empty Array' do
-        expect(subject.parents(:one)).to be_an(Array).and be_empty
+        expect(subject.parents(:foo)).to be_an(Array).and be_empty
       end
     end
 
     context 'for regular node' do
       it 'returns an Array of parent nodes' do
-        expect(subject.parents(:two)).to be_an(Array).and contain_exactly(:one)
+        expect(subject.parents(:bar)).to be_an(Array).and contain_exactly(:foo)
       end
     end
   end
@@ -24,23 +24,23 @@ describe Pallets::Graph do
   describe '#sorted_with_order' do
     let(:graph) do
       Pallets::Graph.new.tap do |g|
-        g.add(:one,   [])
-        g.add(:two,   [:one])
-        g.add(:three, [:one])
-        g.add(:four,  [:two])
+        g.add(:foo, [])
+        g.add(:bar, [:foo])
+        g.add(:baz, [:foo])
+        g.add(:qux, [:bar])
       end
     end
 
     it 'returns a properly formatted Array' do
       expect(graph.sorted_with_order).to eq([
-        [:one, 0], [:two, 1], [:three, 1], [:four, 3]
+        [:foo, 0], [:bar, 1], [:baz, 1], [:qux, 3]
       ])
     end
 
     context 'with a dependency that is not defined' do
       let(:graph) do
         Pallets::Graph.new.tap do |g|
-          g.add(:one, [:two])
+          g.add(:foo, [:bar])
         end
       end
 
