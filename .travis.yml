@@ -1,5 +1,7 @@
 ---
 language: ruby
+services:
+  - redis-server
 cache: bundler
 rvm:
   - 2.1.10

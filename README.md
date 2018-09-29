@@ -1,4 +1,7 @@
 # Pallets
+
+[![Build Status](https://travis-ci.com/linkyndy/pallets.svg?branch=master)](https://travis-ci.com/linkyndy/pallets)
+
 Toy workflow engine, written in Ruby
 
 ## It is plain simple!
