@@ -71,12 +71,6 @@ end
 
 For the complete set of options, see [pallets/configuration.rb](lib/pallets/configuration.rb)
 
-## Performance
-
-Pallets can process up to xxx workflows* per second!
-
-* workflows consisting of a single task that simply prints a message
-
 ## Motivation
 
 The main reason for Pallet's existence was the need of a fast, simple and reliable workflow engine, one that is easily extensible with various backends and serializer, one that does not lose your data and one that is intelligent enough to concurrently schedule a workflow's tasks.
