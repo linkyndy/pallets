@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Andrei Horak"]
   spec.email         = ["linkyndy@gmail.com"]
 
-  spec.summary       = 'Toy workflow engine'
-  spec.description   = 'Toy workflow engine'
+  spec.summary       = 'Toy workflow engine, written in Ruby'
+  spec.description   = 'Toy workflow engine, written in Ruby'
   spec.homepage      = 'https://github.com/linkyndy/pallets'
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
@@ -22,8 +22,8 @@ Gem::Specification.new do |spec|
   end
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
-  spec.bindir        = "exe"
-  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
+  spec.bindir        = "bin"
+  spec.executables   = ["pallets"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "activesupport"
@@ -33,5 +33,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "timecop"
   spec.add_development_dependency "fuubar"
-  spec.add_development_dependency "pry-byebug"
 end
