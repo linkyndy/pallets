@@ -13,11 +13,12 @@ require 'pallets/serializers/base'
 require 'pallets/serializers/json'
 require 'pallets/serializers/msgpack'
 require 'pallets/task'
+require 'pallets/util'
 require 'pallets/worker'
 require 'pallets/workflow'
 
-require 'active_support/inflector'
 require 'logger'
+require 'securerandom'
 
 module Pallets
   def self.configuration
@@ -30,7 +31,7 @@ module Pallets
 
   def self.backend
     @backend ||= begin
-      cls = "Pallets::Backends::#{configuration.backend.capitalize}".constantize
+      cls = Pallets::Util.constantize("Pallets::Backends::#{configuration.backend.capitalize}")
       cls.new(
         namespace: configuration.namespace,
         blocking_timeout: configuration.blocking_timeout,
@@ -43,7 +44,7 @@ module Pallets
 
   def self.serializer
     @serializer ||= begin
-      cls = "Pallets::Serializers::#{configuration.serializer.capitalize}".constantize
+      cls = Pallets::Util.constantize("Pallets::Serializers::#{configuration.serializer.capitalize}")
       cls.new
     end
   end

@@ -1,10 +1,7 @@
-require 'active_support'
-
 module Pallets
   module DSL
     module Workflow
-      def task(*args, &block)
-        options = args.extract_options!
+      def task(*args, **options, &block)
         name, depends_on = if args.any?
           [args.first, options[:depends_on]]
         else
@@ -17,7 +14,7 @@ module Pallets
         dependencies = Array(depends_on).compact.map(&:to_sym)
         graph.add(name, dependencies)
 
-        class_name = options[:class_name] || name.to_s.camelize
+        class_name = options[:class_name] || Pallets::Util.camelize(name)
         max_failures = options[:max_failures] || Pallets.configuration.max_failures
 
         task_config[name] = {

@@ -63,7 +63,7 @@ module Pallets
         return
       end
 
-      task_class = job_hash["class_name"].constantize
+      task_class = Pallets::Util.constantize(job_hash["class_name"])
       task = task_class.new(job_hash["context"])
       begin
         task.run
