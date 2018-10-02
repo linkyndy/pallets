@@ -37,7 +37,7 @@ That's basically it! Curious for more? Read on!
 * reliable
 * retries failed tasks
 * Redis backend out of the box
-* JSON serializer out of the box
+* JSON and msgpack serializers out of the box
 * beautiful DSL
 * convention over configuration
 * thoroughly tested
