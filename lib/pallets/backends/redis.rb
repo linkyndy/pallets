@@ -15,6 +15,8 @@ module Pallets
         @retry_set_key = "#{namespace}:retry-set"
         @fail_set_key = "#{namespace}:fail-set"
         @workflow_key = "#{namespace}:workflows:%s"
+        @context_log_key = "#{namespace}:context-logs:%s"
+        @counter_key = "#{namespace}:counters:%s"
 
         register_scripts
       end
@@ -35,12 +37,18 @@ module Pallets
         job
       end
 
-      def save(workflow_id, job)
+      def get_context_log(workflow_id)
+        @pool.execute do |client|
+          client.lrange(@context_log_key % workflow_id, 0, -1)
+        end
+      end
+
+      def save(workflow_id, job, context_log_item)
         @pool.execute do |client|
           client.eval(
             @scripts['save'],
-            [@workflow_key % workflow_id, @queue_key, @reliability_queue_key, @reliability_set_key],
-            [job]
+            [@workflow_key % workflow_id, @queue_key, @reliability_queue_key, @reliability_set_key, @context_log_key % workflow_id, @counter_key % workflow_id],
+            [job, context_log_item]
           )
         end
       end
@@ -85,12 +93,12 @@ module Pallets
         end
       end
 
-      def run_workflow(workflow_id, jobs_with_order)
+      def run_workflow(workflow_id, jobs_with_order, context_log, number_of_jobs)
         @pool.execute do |client|
           client.eval(
             @scripts['run_workflow'],
-            [@workflow_key % workflow_id, @queue_key],
-            jobs_with_order
+            [@workflow_key % workflow_id, @queue_key, @context_log_key % workflow_id, @counter_key % workflow_id],
+            jobs_with_order << context_log << number_of_jobs
           )
         end
       end

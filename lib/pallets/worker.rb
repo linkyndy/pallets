@@ -63,16 +63,25 @@ module Pallets
         return
       end
 
+      context = retrieve_context(job_hash['workflow_id'])
+
       task_class = Pallets::Util.constantize(job_hash["class_name"])
-      task = task_class.new(job_hash["context"])
+      task = task_class.new(context)
       begin
         task.run
       rescue => ex
         handle_job_error(ex, job, job_hash)
       else
-        backend.save(job_hash["workflow_id"], job)
-        Pallets.logger.info "[#{id}] Successfully processed #{job}"
+        handle_job_success(context, job, job_hash)
       end
+    end
+
+    def retrieve_context(workflow_id)
+      context_log = backend.get_context_log(workflow_id)
+      context_log_hash = context_log.map do |item|
+        serializer.load(item)
+      end.inject(&:merge)
+      Context[context_log_hash]
     end
 
     def handle_job_error(ex, job, job_hash)
@@ -92,6 +101,12 @@ module Pallets
         backend.give_up(new_job, job, Time.now.to_f)
         Pallets.logger.info "[#{id}] Given up on job"
       end
+    end
+
+    def handle_job_success(context, job, job_hash)
+      new_context_log_item = serializer.dump(context.buffer)
+      backend.save(job_hash['workflow_id'], job, new_context_log_item)
+      Pallets.logger.info "[#{id}] Successfully processed #{job}"
     end
 
     def backoff_in_seconds(count)

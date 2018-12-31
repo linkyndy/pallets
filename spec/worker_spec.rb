@@ -160,11 +160,11 @@ describe Pallets::Worker do
     let(:job) { double }
     let(:job_hash) do
       {
-        'context' => { bar: :baz },
         'workflow_id' => 'qux',
         'class_name' => 'Foo',
       }
     end
+    let(:context) { instance_spy('Pallets::Context') }
     let(:task_class) { class_double('Foo').as_stubbed_const }
     let(:task) { instance_spy('Foo') }
 
@@ -177,7 +177,9 @@ describe Pallets::Worker do
       allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:serializer).and_return(serializer)
       allow(task_class).to receive(:new).and_return(task)
+      allow(subject).to receive(:retrieve_context).and_return(context)
       allow(subject).to receive(:handle_job_error)
+      allow(subject).to receive(:handle_job_success)
     end
 
     it 'uses the serializer to load the job' do
@@ -196,6 +198,11 @@ describe Pallets::Worker do
         expect(backend).to have_received(:discard).with(job)
       end
 
+      it 'does not ask the backend for the context' do
+        subject.send(:process, job)
+        expect(subject).not_to have_received(:retrieve_context)
+      end
+
       it 'does not instantiate the task' do
         subject.send(:process, job)
         expect(task_class).not_to have_received(:new)
@@ -206,15 +213,21 @@ describe Pallets::Worker do
         expect(task).not_to have_received(:run)
       end
 
-      it 'does not tell the backend to save the job' do
+      it 'does not invoke any handler' do
         subject.send(:process, job)
-        expect(backend).not_to have_received(:save)
+        expect(subject).not_to have_received(:handle_job_error)
+        expect(subject).not_to have_received(:handle_job_success)
       end
+    end
+
+    it 'asks the backend for the context' do
+      subject.send(:process, job)
+      expect(subject).to have_received(:retrieve_context).with('qux')
     end
 
     it 'instantiates the correct task' do
       subject.send(:process, job)
-      expect(task_class).to have_received(:new).with(bar: :baz)
+      expect(task_class).to have_received(:new).with(context)
     end
 
     it 'runs the task' do
@@ -235,10 +248,40 @@ describe Pallets::Worker do
     end
 
     context 'when the task is run successfully' do
-      it 'tells the backend to save the job' do
+      it 'calls the success handler' do
         subject.send(:process, job)
-        expect(backend).to have_received(:save).with('qux', job)
+        expect(subject).to have_received(:handle_job_success).with(context, job, job_hash)
       end
+    end
+  end
+
+  describe '#retrieve_context' do
+    let(:backend) { instance_spy('Pallets::Backends::Base') }
+    let(:serializer) { instance_spy('Pallets::Serializers::Base', load: context_log_item_hash) }
+    let(:context_log_item) { double }
+    let(:context_log) { [context_log_item] }
+    let(:context_log_item_hash) { { 'bar' => 'baz' } }
+
+    before do
+      allow(backend).to receive(:get_context_log).and_return(context_log)
+      allow(subject).to receive(:backend).and_return(backend)
+      allow(subject).to receive(:serializer).and_return(serializer)
+    end
+
+    it 'asks the backend for the context log' do
+      subject.send(:retrieve_context, 'qux')
+      expect(backend).to have_received(:get_context_log).with('qux')
+    end
+
+    it 'uses the serializer to load the context log items' do
+      subject.send(:retrieve_context, 'qux')
+      expect(serializer).to have_received(:load).with(context_log_item)
+    end
+
+    it 'returns a Context with the correct data' do
+      expect(subject.send(:retrieve_context, 'qux')).to be_a(Pallets::Context).and match(
+        'bar' => 'baz'
+      )
     end
   end
 
@@ -250,7 +293,6 @@ describe Pallets::Worker do
     let(:job_hash) do
       {
         'workflow_id' => 'qux',
-        'context' => { bar: :baz },
         'class_name' => 'Foo',
         'max_failures' => 15
       }
@@ -335,6 +377,33 @@ describe Pallets::Worker do
           )
         end
       end
+    end
+  end
+
+  describe '#handle_job_success' do
+    let(:backend) { instance_spy('Pallets::Backends::Base') }
+    let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
+    let(:job) { double }
+    let(:job_hash) do
+      {
+        'workflow_id' => 'qux'
+      }
+    end
+    let(:context) { instance_spy('Pallets::Context', buffer: { 'foo' => 'bar' }) }
+
+    before do
+      allow(subject).to receive(:backend).and_return(backend)
+      allow(subject).to receive(:serializer).and_return(serializer)
+    end
+
+    it 'builds a new context log item and uses the serializer to dump it' do
+      subject.send(:handle_job_success, context, job, job_hash)
+      expect(serializer).to have_received(:dump).with('foo' => 'bar')
+    end
+
+    it 'tells the backend to save the job' do
+      subject.send(:handle_job_success, context, job, job_hash)
+      expect(backend).to have_received(:save).with('qux', job, 'foobar')
     end
   end
 end
