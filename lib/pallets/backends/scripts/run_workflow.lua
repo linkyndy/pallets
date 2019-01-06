@@ -2,10 +2,6 @@
 local number_of_jobs = table.remove(ARGV)
 redis.call("SET", KEYS[4], number_of_jobs)
 
--- Add initial context log item to set
-local context_log = table.remove(ARGV)
-redis.call("RPUSH", KEYS[3], context_log)
-
 -- Add all jobs to sorted set
 redis.call("ZADD", KEYS[1], unpack(ARGV))
 

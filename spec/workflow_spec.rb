@@ -28,11 +28,6 @@ describe Pallets::Workflow do
       allow(subject).to receive(:serializer).and_return(serializer)
     end
 
-    it 'builds a new context log item and uses the serializer to dump it' do
-      subject.run
-      expect(serializer).to have_received(:dump).with(foo: :bar)
-    end
-
     it 'builds a job for each task and uses the serializer to dump it' do
       Timecop.freeze do
         subject.run
@@ -52,7 +47,7 @@ describe Pallets::Workflow do
         subject.run
         expect(backend).to have_received(:run_workflow).with(a_kind_of(String), [
           [0, 'foobar'], [1, 'foobar'], [1, 'foobar'], [3, 'foobar']
-        ], 'foobar', 4)
+        ], context)
       end
     end
   end

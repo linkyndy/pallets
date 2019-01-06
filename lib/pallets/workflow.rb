@@ -10,8 +10,7 @@ module Pallets
     end
 
     def run
-      context_log_item = serializer.dump(context)
-      backend.run_workflow(id, jobs_with_order, context_log_item, jobs_with_order.size)
+      backend.run_workflow(id, jobs_with_order, context)
       id
     end
 
@@ -26,7 +25,7 @@ module Pallets
     private
 
     def jobs_with_order
-      @jobs_with_order ||= self.class.graph.sorted_with_order.map do |task_name, order|
+      self.class.graph.sorted_with_order.map do |task_name, order|
         job = serializer.dump(job_hash.merge(self.class.task_config[task_name]))
         [order, job]
       end

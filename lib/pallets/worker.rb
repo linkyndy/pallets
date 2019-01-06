@@ -63,7 +63,7 @@ module Pallets
         return
       end
 
-      context = retrieve_context(job_hash['workflow_id'])
+      context = Context[backend.get_context(job_hash['workflow_id'])]
 
       task_class = Pallets::Util.constantize(job_hash["class_name"])
       task = task_class.new(context)
@@ -74,14 +74,6 @@ module Pallets
       else
         handle_job_success(context, job, job_hash)
       end
-    end
-
-    def retrieve_context(workflow_id)
-      context_log = backend.get_context_log(workflow_id)
-      context_log_hash = context_log.map do |item|
-        serializer.load(item)
-      end.inject(&:merge)
-      Context[context_log_hash]
     end
 
     def handle_job_error(ex, job, job_hash)
@@ -104,8 +96,7 @@ module Pallets
     end
 
     def handle_job_success(context, job, job_hash)
-      new_context_log_item = serializer.dump(context.buffer)
-      backend.save(job_hash['workflow_id'], job, new_context_log_item)
+      backend.save(job_hash['workflow_id'], job, context.buffer)
       Pallets.logger.info "[#{id}] Successfully processed #{job}"
     end
 

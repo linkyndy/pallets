@@ -1,9 +1,10 @@
 -- Remove job from reliability queue
-redis.call("LREM", KEYS[3], 0, ARGV[1])
-redis.call("ZREM", KEYS[4], ARGV[1])
+local job = table.remove(ARGV)
+redis.call("LREM", KEYS[3], 0, job)
+redis.call("ZREM", KEYS[4], job)
 
--- Add context log item to list
-redis.call("RPUSH", KEYS[5], ARGV[2])
+-- Update context hash with buffer
+redis.call("HMSET", KEYS[5], unpack(ARGV))
 
 -- Decrement all jobs from the sorted set
 local all_pending = redis.call("ZRANGE", KEYS[1], 0, -1)

@@ -15,7 +15,7 @@ module Pallets
         @retry_set_key = "#{namespace}:retry-set"
         @fail_set_key = "#{namespace}:fail-set"
         @workflow_key = "#{namespace}:workflows:%s"
-        @context_log_key = "#{namespace}:context-logs:%s"
+        @context_key = "#{namespace}:contexts:%s"
         @counter_key = "#{namespace}:counters:%s"
 
         register_scripts
@@ -37,18 +37,19 @@ module Pallets
         job
       end
 
-      def get_context_log(workflow_id)
+      def get_context(workflow_id)
         @pool.execute do |client|
-          client.lrange(@context_log_key % workflow_id, 0, -1)
+          client.hgetall(@context_key % workflow_id)
         end
       end
 
-      def save(workflow_id, job, context_log_item)
+      def save(workflow_id, job, context_buffer)
         @pool.execute do |client|
           client.eval(
             @scripts['save'],
-            [@workflow_key % workflow_id, @queue_key, @reliability_queue_key, @reliability_set_key, @context_log_key % workflow_id, @counter_key % workflow_id],
-            [job, context_log_item]
+            [@workflow_key % workflow_id, @queue_key, @reliability_queue_key, @reliability_set_key, @context_key % workflow_id, @counter_key % workflow_id],
+            # [job, context_log_item]
+            context_buffer.to_a << job
           )
         end
       end
@@ -93,13 +94,14 @@ module Pallets
         end
       end
 
-      def run_workflow(workflow_id, jobs_with_order, context_log, number_of_jobs)
+      def run_workflow(workflow_id, jobs_with_order, context)
         @pool.execute do |client|
           client.eval(
             @scripts['run_workflow'],
-            [@workflow_key % workflow_id, @queue_key, @context_log_key % workflow_id, @counter_key % workflow_id],
-            jobs_with_order << context_log << number_of_jobs
+            [@workflow_key % workflow_id, @queue_key, @context_key % workflow_id, @counter_key % workflow_id],
+            jobs_with_order << jobs_with_order.size
           )
+          client.hmset(@context_key % workflow_id, *context.to_a)
         end
       end
 
