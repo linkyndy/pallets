@@ -1,9 +1,8 @@
--- Set counter key
-local number_of_jobs = table.remove(ARGV)
-redis.call("SET", KEYS[4], number_of_jobs)
-
 -- Add all jobs to sorted set
-redis.call("ZADD", KEYS[1], unpack(ARGV))
+local eta = redis.call("ZADD", KEYS[1], unpack(ARGV))
+
+-- Set ETA key; this is merely the number of jobs that need to be processed
+redis.call("SET", KEYS[3], eta)
 
 -- Queue jobs that are ready to be processed (their score is 0) and
 -- remove queued jobs from the sorted set

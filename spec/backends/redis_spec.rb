@@ -105,8 +105,8 @@ describe Pallets::Backends::Redis do
         # Set up jobs sorted set
         redis.zadd('test:workflows:baz', [[1, 'bar'], [2, 'baz'], [5, 'qux']])
 
-        # Set up counter
-        redis.set('test:counters:baz', 3)
+        # Set up ETA
+        redis.set('test:etas:baz', 3)
       end
 
       it 'decrements and removes jobs with 0 from workflow set' do
@@ -119,16 +119,16 @@ describe Pallets::Backends::Redis do
         expect(redis.lrange('test:queue', 0, -1)).to eq(['bar'])
       end
 
-      it 'decrements the counter' do
+      it 'decrements the ETA' do
         subject.save('baz', 'foo', 'baz' => 'qux')
-        expect(redis.get('test:counters:baz')).to eq('2')
+        expect(redis.get('test:etas:baz')).to eq('2')
       end
     end
 
     context 'with no more jobs to queue' do
       before do
-        # Set up counter
-        redis.set('test:counters:baz', 1)
+        # Set up ETA
+        redis.set('test:etas:baz', 1)
       end
 
       it 'clears the context' do
@@ -136,9 +136,9 @@ describe Pallets::Backends::Redis do
         expect(redis.exists('test:contexts:baz')).to be(false)
       end
 
-      it 'clears the counter' do
+      it 'clears the ETA' do
         subject.save('baz', 'foo', 'baz' => 'qux')
-        expect(redis.exists('test:counters:baz')).to be(false)
+        expect(redis.exists('test:etas:baz')).to be(false)
       end
     end
   end
@@ -203,10 +203,10 @@ describe Pallets::Backends::Redis do
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    it 'adds the new job to the fail set' do
+    it 'adds the new job to the given up set' do
       Timecop.freeze do
         subject.give_up('foonew', 'foo', 1234)
-        expect(redis.zrange('test:fail-set', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
+        expect(redis.zrange('test:given-up-set', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
       end
     end
   end
@@ -243,9 +243,9 @@ describe Pallets::Backends::Redis do
   end
 
   describe '#run_workflow' do
-    it 'sets the counter' do
+    it 'sets the ETA' do
       subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
-      expect(redis.get('test:counters:baz')).to eq('2')
+      expect(redis.get('test:etas:baz')).to eq('2')
     end
 
     it 'sets the context' do

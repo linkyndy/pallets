@@ -21,7 +21,8 @@ if count > 0 then
   redis.call("ZREM", KEYS[1], unpack(work))
 end
 
--- Decrement counter and remove it together with the context log if all tasks have been processed (counter is 0)
+-- Decrement ETA and remove it together with the context if all tasks have
+-- been processed (ETA is 0)
 redis.call("DECR", KEYS[6])
 if tonumber(redis.call("GET", KEYS[6])) == 0 then
   redis.call("DEL", KEYS[5], KEYS[6])
