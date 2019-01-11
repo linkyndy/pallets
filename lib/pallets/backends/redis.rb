@@ -13,8 +13,10 @@ module Pallets
         @reliability_queue_key = "#{namespace}:reliability-queue"
         @reliability_set_key = "#{namespace}:reliability-set"
         @retry_set_key = "#{namespace}:retry-set"
-        @fail_set_key = "#{namespace}:fail-set"
+        @given_up_set_key = "#{namespace}:given-up-set"
         @workflow_key = "#{namespace}:workflows:%s"
+        @context_key = "#{namespace}:contexts:%s"
+        @eta_key = "#{namespace}:etas:%s"
 
         register_scripts
       end
@@ -35,12 +37,18 @@ module Pallets
         job
       end
 
-      def save(workflow_id, job)
+      def get_context(workflow_id)
+        @pool.execute do |client|
+          client.hgetall(@context_key % workflow_id)
+        end
+      end
+
+      def save(workflow_id, job, context_buffer)
         @pool.execute do |client|
           client.eval(
             @scripts['save'],
-            [@workflow_key % workflow_id, @queue_key, @reliability_queue_key, @reliability_set_key],
-            [job]
+            [@workflow_key % workflow_id, @queue_key, @reliability_queue_key, @reliability_set_key, @context_key % workflow_id, @eta_key % workflow_id],
+            context_buffer.to_a << job
           )
         end
       end
@@ -69,7 +77,7 @@ module Pallets
         @pool.execute do |client|
           client.eval(
             @scripts['give_up'],
-            [@fail_set_key, @reliability_queue_key, @reliability_set_key],
+            [@given_up_set_key, @reliability_queue_key, @reliability_set_key],
             [at, job, old_job]
           )
         end
@@ -85,13 +93,16 @@ module Pallets
         end
       end
 
-      def run_workflow(workflow_id, jobs_with_order)
+      def run_workflow(workflow_id, jobs_with_order, context)
         @pool.execute do |client|
-          client.eval(
-            @scripts['run_workflow'],
-            [@workflow_key % workflow_id, @queue_key],
-            jobs_with_order
-          )
+          client.multi do
+            client.eval(
+              @scripts['run_workflow'],
+              [@workflow_key % workflow_id, @queue_key, @eta_key % workflow_id],
+              jobs_with_order
+            )
+            client.hmset(@context_key % workflow_id, *context.to_a)
+          end
         end
       end
 

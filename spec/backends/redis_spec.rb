@@ -64,34 +64,82 @@ describe Pallets::Backends::Redis do
     end
   end
 
+  describe '#get_context' do
+    before do
+      # Set up context
+      redis.hmset('test:contexts:baz', ['foo', 'bar', 'baz', 'qux'])
+    end
+
+    it 'retrieves the context' do
+      expect(subject.get_context('baz')).to eq({ 'foo' => 'bar', 'baz' => 'qux' })
+    end
+  end
+
   describe '#save' do
     before do
       # Set up reliability components
       redis.lpush('test:reliability-queue', 'foo')
       redis.zadd('test:reliability-set', 123, 'foo')
 
-      # Set up jobs sorted set
-      redis.zadd('test:workflows:baz', [[1, 'bar'], [2, 'baz'], [5, 'qux']])
+      # Set up context
+      redis.hset('test:contexts:baz', 'foo', 'bar')
     end
 
     it 'removes the job from the reliability queue' do
-      subject.save('baz', 'foo')
+      subject.save('baz', 'foo', 'baz' => 'qux')
       expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.save('baz', 'foo')
+      subject.save('baz', 'foo', 'baz' => 'qux')
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    it 'decrements and removed jobs with 0 from workflow set' do
-      subject.save('baz', 'foo')
-      expect(redis.zrange('test:workflows:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 4]])
+    it 'adds the context buffer to the context' do
+      subject.save('baz', 'foo', 'baz' => 'qux')
+      expect(redis.hgetall('test:contexts:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
     end
 
-    it 'queues jobs that are ready to be processed' do
-      subject.save('baz', 'foo')
-      expect(redis.lrange('test:queue', 0, -1)).to eq(['bar'])
+    context 'with more jobs to queue' do
+      before do
+        # Set up jobs sorted set
+        redis.zadd('test:workflows:baz', [[1, 'bar'], [2, 'baz'], [5, 'qux']])
+
+        # Set up ETA
+        redis.set('test:etas:baz', 3)
+      end
+
+      it 'decrements and removes jobs with 0 from workflow set' do
+        subject.save('baz', 'foo', 'baz' => 'qux')
+        expect(redis.zrange('test:workflows:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 4]])
+      end
+
+      it 'queues jobs that are ready to be processed' do
+        subject.save('baz', 'foo', 'baz' => 'qux')
+        expect(redis.lrange('test:queue', 0, -1)).to eq(['bar'])
+      end
+
+      it 'decrements the ETA' do
+        subject.save('baz', 'foo', 'baz' => 'qux')
+        expect(redis.get('test:etas:baz')).to eq('2')
+      end
+    end
+
+    context 'with no more jobs to queue' do
+      before do
+        # Set up ETA
+        redis.set('test:etas:baz', 1)
+      end
+
+      it 'clears the context' do
+        subject.save('baz', 'foo', 'baz' => 'qux')
+        expect(redis.exists('test:contexts:baz')).to be(false)
+      end
+
+      it 'clears the ETA' do
+        subject.save('baz', 'foo', 'baz' => 'qux')
+        expect(redis.exists('test:etas:baz')).to be(false)
+      end
     end
   end
 
@@ -155,10 +203,10 @@ describe Pallets::Backends::Redis do
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    it 'adds the new job to the fail set' do
+    it 'adds the new job to the given up set' do
       Timecop.freeze do
         subject.give_up('foonew', 'foo', 1234)
-        expect(redis.zrange('test:fail-set', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
+        expect(redis.zrange('test:given-up-set', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
       end
     end
   end
@@ -195,13 +243,23 @@ describe Pallets::Backends::Redis do
   end
 
   describe '#run_workflow' do
+    it 'sets the ETA' do
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
+      expect(redis.get('test:etas:baz')).to eq('2')
+    end
+
+    it 'sets the context' do
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
+      expect(redis.hgetall('test:contexts:baz')).to eq('foo' => 'bar')
+    end
+
     it 'adds pending jobs to workflow set' do
-      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']])
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
       expect(redis.zrange('test:workflows:baz', 0, -1, with_scores: true)).to eq([['bar', 1]])
     end
 
     it 'queues jobs that are ready to be processed' do
-      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']])
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
       expect(redis.lrange('test:queue', 0, -1)).to eq(['foo'])
     end
   end

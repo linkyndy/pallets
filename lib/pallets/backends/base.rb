@@ -6,8 +6,12 @@ module Pallets
         raise NotImplementedError
       end
 
+      def get_context(workflow_id)
+        raise NotImplementedError
+      end
+
       # Saves a job after successfully processing it
-      def save(workflow_id, job)
+      def save(workflow_id, job, context_buffer)
         raise NotImplementedError
       end
 
@@ -30,7 +34,7 @@ module Pallets
         raise NotImplementedError
       end
 
-      def run_workflow(workflow_id, jobs_with_dependencies)
+      def run_workflow(workflow_id, jobs_with_dependencies, context)
         raise NotImplementedError
       end
     end

@@ -10,7 +10,7 @@ module Pallets
     end
 
     def run
-      backend.run_workflow(id, jobs_with_order)
+      backend.run_workflow(id, jobs_with_order, context)
       id
     end
 
@@ -34,7 +34,6 @@ module Pallets
     def job_hash
       {
         'workflow_id' => id,
-        'context'     => context,
         'created_at'  => Time.now.to_f
       }
     end

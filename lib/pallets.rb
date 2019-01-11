@@ -3,6 +3,7 @@ require "pallets/version"
 require 'pallets/backends/base'
 require 'pallets/backends/redis'
 require 'pallets/configuration'
+require 'pallets/context'
 require 'pallets/dsl/workflow'
 require 'pallets/errors'
 require 'pallets/graph'

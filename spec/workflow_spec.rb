@@ -34,7 +34,6 @@ describe Pallets::Workflow do
         %w(Foo Bar Baz Qux).each do |task_class_name|
           expect(serializer).to have_received(:dump).with({
             'workflow_id' => a_kind_of(String),
-            'context' => { foo: :bar },
             'created_at' => Time.now.to_f,
             'class_name' => task_class_name,
             'max_failures' => 3
@@ -48,7 +47,7 @@ describe Pallets::Workflow do
         subject.run
         expect(backend).to have_received(:run_workflow).with(a_kind_of(String), [
           [0, 'foobar'], [1, 'foobar'], [1, 'foobar'], [3, 'foobar']
-        ])
+        ], context)
       end
     end
   end
