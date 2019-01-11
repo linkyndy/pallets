@@ -22,19 +22,17 @@ module Pallets
       end
 
       def pick
-        job = @pool.execute do |client|
-          client.brpoplpush(@queue_key, @reliability_queue_key, timeout: @blocking_timeout)
-        end
-        if job
-          # We store the job's timeout so we know when to retry jobs that are
-          # still on the reliability queue. We do this separately since there is
-          # no other way to atomically BRPOPLPUSH from the main queue to a
-          # sorted set
-          @pool.execute do |client|
+        @pool.execute do |client|
+          job = client.brpoplpush(@queue_key, @reliability_queue_key, timeout: @blocking_timeout)
+          if job
+            # We store the job's timeout so we know when to retry jobs that are
+            # still on the reliability queue. We do this separately since there is
+            # no other way to atomically BRPOPLPUSH from the main queue to a
+            # sorted set
             client.zadd(@reliability_set_key, Time.now.to_f + @job_timeout, job)
           end
+          job
         end
-        job
       end
 
       def get_context(workflow_id)
