@@ -79,7 +79,7 @@ module Pallets
 
     def handle_job_error(ex, job, job_hash)
       Pallets.logger.warn "#{ex.class.name}: #{ex.message}", extract_metadata(job_hash)
-      Pallets.logger.warn ex.backtrace.join("\n"), extract_metadata(job_hash)
+      Pallets.logger.warn ex.backtrace.join("\n"), extract_metadata(job_hash) unless ex.backtrace.nil?
       failures = job_hash.fetch('failures', 0) + 1
       new_job = serializer.dump(job_hash.merge(
         'failures' => failures,
