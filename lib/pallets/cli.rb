@@ -30,7 +30,7 @@ module Pallets
 
     def handle_signal(signal)
       case signal
-      when 'INT'
+      when 'INT', 'TERM'
         raise Interrupt
       end
     end
@@ -92,7 +92,7 @@ module Pallets
     end
 
     def setup_signal_handlers
-      %w(INT).each do |signal|
+      %w(INT TERM).each do |signal|
         trap signal do
           @signal_queue.push signal
         end
