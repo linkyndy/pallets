@@ -11,7 +11,8 @@ module Pallets
     end
 
     def run
-      Pallets.logger.info 'Starting the awesomeness of Pallets <3'
+      Pallets.logger.info 'Starting the awesome Pallets <3'
+      Pallets.logger.info "Running on #{RUBY_DESCRIPTION}"
 
       @manager.start
 
