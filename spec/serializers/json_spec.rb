@@ -4,7 +4,7 @@ describe Pallets::Serializers::Json do
   let(:json_class) { class_double('JSON').as_stubbed_const }
 
   it 'properly serializes and deserializes data' do
-    expect(subject.load(subject.dump('foo'))).to eq('foo')
+    expect(subject.load(subject.dump('foo' => 'bar'))).to eq('foo' => 'bar')
   end
 
   describe '#dump' do

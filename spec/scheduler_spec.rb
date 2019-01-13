@@ -58,7 +58,7 @@ describe Pallets::Scheduler do
       end
 
       it 'returns an ID following a specific pattern' do
-        expect(subject.id).to match(/W\w+/)
+        expect(subject.id).to match(/S\w+/)
       end
     end
 
@@ -82,7 +82,7 @@ describe Pallets::Scheduler do
     it 'tells the backend to reschedule jobs' do
       Timecop.freeze do
         subject.send(:work)
-        expect(backend).to have_received(:reschedule).with(Time.now.to_f)
+        expect(backend).to have_received(:reschedule_all).with(Time.now.to_f)
       end
     end
 
@@ -98,7 +98,7 @@ describe Pallets::Scheduler do
 
       it 'does not tell the backend to reschedule jobs' do
         subject.send(:work)
-        expect(backend).not_to have_received(:reschedule)
+        expect(backend).not_to have_received(:reschedule_all)
       end
 
       it 'does not wait for anything' do
