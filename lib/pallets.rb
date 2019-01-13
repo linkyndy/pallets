@@ -7,6 +7,7 @@ require 'pallets/context'
 require 'pallets/dsl/workflow'
 require 'pallets/errors'
 require 'pallets/graph'
+require 'pallets/logger'
 require 'pallets/manager'
 require 'pallets/pool'
 require 'pallets/scheduler'
@@ -18,7 +19,6 @@ require 'pallets/util'
 require 'pallets/worker'
 require 'pallets/workflow'
 
-require 'logger'
 require 'securerandom'
 
 module Pallets
@@ -51,6 +51,17 @@ module Pallets
   end
 
   def self.logger
-    @logger ||= Logger.new(STDOUT)
+    @logger ||= begin
+      logger = Pallets::Logger.new(STDOUT)
+      # TODO: Ruby 2.4 supports Logger initialization with the arguments below, so
+      #       we can drop this after we drop support for Ruby 2.3
+      logger.level = Pallets::Logger::INFO
+      logger.formatter = Pallets::Logger::Formatters::Pretty.new
+      logger
+    end
+  end
+
+  def self.logger=(logger)
+    @logger = logger
   end
 end

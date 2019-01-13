@@ -33,8 +33,9 @@ module Pallets
 
     def job_hash
       {
-        'workflow_id' => id,
-        'created_at'  => Time.now.to_f
+        'workflow_id'         => id,
+        'workflow_class_name' => self.class.name,
+        'created_at'          => Time.now.to_f
       }
     end
 
