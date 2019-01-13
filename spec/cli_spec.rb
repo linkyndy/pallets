@@ -174,5 +174,16 @@ describe Pallets::CLI do
         expect(manager).to have_received(:shutdown)
       end
     end
+
+    context 'with a TERM signal being sent' do
+      before do
+        allow(queue).to receive(:pop).and_return('TERM')
+      end
+
+      it 'shuts down the manager' do
+        subject.run
+        expect(manager).to have_received(:shutdown)
+      end
+    end
   end
 end
