@@ -34,6 +34,7 @@ describe Pallets::Workflow do
         %w(Foo Bar Baz Qux).each do |task_class_name|
           expect(serializer).to have_received(:dump).with({
             'workflow_id' => a_kind_of(String),
+            'workflow_class_name' => 'TestWorkflow',
             'created_at' => Time.now.to_f,
             'class_name' => task_class_name,
             'max_failures' => 3
