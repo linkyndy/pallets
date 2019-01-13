@@ -210,7 +210,7 @@ describe Pallets::Worker do
         expect(task_class).not_to have_received(:new)
       end
 
-      it 'runs the task' do
+      it 'does not run the task' do
         subject.send(:process, job)
         expect(task).not_to have_received(:run)
       end
@@ -229,7 +229,7 @@ describe Pallets::Worker do
 
     it 'instantiates the correct context' do
       subject.send(:process, job)
-      expect(context_class).to receive(:[]).with(foo: :bar)
+      expect(context_class).to have_received(:[]).with(foo: :bar)
     end
 
     it 'instantiates the correct task' do
@@ -346,10 +346,10 @@ describe Pallets::Worker do
         }
       end
 
-      it 'tells the backend to kill the job' do
+      it 'tells the backend to give up the job' do
         Timecop.freeze do
           subject.send(:handle_job_error, ex, job, job_hash)
-          expect(backend).to have_received(:kill).with(
+          expect(backend).to have_received(:give_up).with(
             'foobar', job, Time.now.to_f
           )
         end
