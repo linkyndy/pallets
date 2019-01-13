@@ -53,7 +53,7 @@ module Pallets
   def self.logger
     @logger ||= Pallets::Logger.new(STDOUT,
       level: Pallets::Logger::INFO,
-      formatter: Pallets::Logger::Formatters::Base.new
+      formatter: Pallets::Logger::Formatters::Pretty.new
     )
   end
 

@@ -14,7 +14,7 @@ module Pallets
     end
 
     module Formatters
-      class Base < ::Logger::Formatter
+      class Pretty < ::Logger::Formatter
         def call(severity, time, metadata, message)
           "#{time.utc.iso8601(4)} pid=#{Process.pid}#{metadata} #{severity}: #{message}\n"
         end
