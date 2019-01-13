@@ -156,6 +156,7 @@ describe Pallets::CLI do
       allow(manager_class).to receive(:new).and_return(manager)
       allow(queue_class).to receive(:new).and_return(queue)
       allow(subject).to receive(:loop).and_yield
+      allow(subject).to receive(:exit)
     end
 
     it 'starts the manager' do
