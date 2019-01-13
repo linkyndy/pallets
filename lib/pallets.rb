@@ -7,6 +7,7 @@ require 'pallets/context'
 require 'pallets/dsl/workflow'
 require 'pallets/errors'
 require 'pallets/graph'
+require 'pallets/logger'
 require 'pallets/manager'
 require 'pallets/pool'
 require 'pallets/scheduler'
@@ -18,7 +19,6 @@ require 'pallets/util'
 require 'pallets/worker'
 require 'pallets/workflow'
 
-require 'logger'
 require 'securerandom'
 
 module Pallets
@@ -51,7 +51,10 @@ module Pallets
   end
 
   def self.logger
-    @logger ||= Logger.new(STDOUT)
+    @logger ||= Pallets::Logger.new(STDOUT,
+      level: Pallets::Logger::INFO,
+      formatter: Pallets::Logger::Formatters::Base.new
+    )
   end
 
   def self.logger=(logger)
