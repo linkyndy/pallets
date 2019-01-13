@@ -1,7 +1,11 @@
 require 'spec_helper'
 
 describe Pallets::Logger do
-  subject { Pallets::Logger.new(output, formatter: formatter) }
+  subject { Pallets::Logger.new(output) }
+
+  before do
+    subject.formatter = formatter
+  end
 
   let(:output) { StringIO.new }
   let(:formatter) { instance_spy('Logger::Formatter') }

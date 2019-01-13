@@ -51,10 +51,14 @@ module Pallets
   end
 
   def self.logger
-    @logger ||= Pallets::Logger.new(STDOUT,
-      level: Pallets::Logger::INFO,
-      formatter: Pallets::Logger::Formatters::Pretty.new
-    )
+    @logger ||= begin
+      logger = Pallets::Logger.new(STDOUT)
+      # TODO: Ruby 2.4 supports Logger initialization with the arguments below, so
+      #       we can drop this after we drop support for Ruby 2.3
+      logger.level = Pallets::Logger::INFO
+      logger.formatter = Pallets::Logger::Formatters::Pretty.new
+      logger
+    end
   end
 
   def self.logger=(logger)
