@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary       = 'Toy workflow engine, written in Ruby'
   spec.description   = 'Toy workflow engine, written in Ruby'
   spec.homepage      = 'https://github.com/linkyndy/pallets'
+  spec.license       = 'MIT'
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.bindir        = "bin"
