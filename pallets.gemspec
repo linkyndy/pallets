@@ -19,6 +19,8 @@ Gem::Specification.new do |spec|
   spec.executables   = ["pallets"]
   spec.require_paths = ["lib"]
 
+  spec.required_ruby_version = '>= 2.3'
+
   spec.add_dependency "redis"
   spec.add_dependency "msgpack"
 end
