@@ -1,4 +1,17 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in pallets.gemspec
 gemspec
+
+gem 'rake'
+
+group :test do
+  gem 'rspec'
+  # Better RSpec formatting
+  gem 'fuubar'
+end
+
+group :development, :test do
+  gem 'pry-byebug'
+  # Time travel in style
+  gem 'timecop'
+end
