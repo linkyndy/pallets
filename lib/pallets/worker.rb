@@ -26,6 +26,10 @@ module Pallets
       @needs_to_stop
     end
 
+    def debug
+      @thread.backtrace
+    end
+
     def id
       "W#{@thread.object_id.to_s(36)}".upcase if @thread
     end

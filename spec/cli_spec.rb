@@ -185,5 +185,26 @@ describe Pallets::CLI do
         expect(manager).to have_received(:shutdown)
       end
     end
+
+    context 'with a TTIN signal being sent' do
+      let(:worker) { instance_double('Pallets::Worker') }
+      let(:scheduler) { instance_double('Pallets::Scheduler') }
+
+      before do
+        allow(queue).to receive(:pop).and_return('TTIN')
+        allow(manager).to receive(:workers).and_return([worker])
+        allow(manager).to receive(:scheduler).and_return(scheduler)
+        allow(worker).to receive(:id)
+        allow(worker).to receive(:debug)
+        allow(scheduler).to receive(:id)
+        allow(scheduler).to receive(:debug)
+      end
+
+      it 'debugs all actors' do
+        subject.run
+        expect(worker).to have_received(:debug)
+        expect(scheduler).to have_received(:debug)
+      end
+    end
   end
 end

@@ -50,6 +50,19 @@ describe Pallets::Worker do
     end
   end
 
+  describe '#debug' do
+    let(:thread) { instance_spy('Thread', backtrace: ['foo'])  }
+
+    before do
+      allow(Thread).to receive(:new).and_return(thread)
+      subject.start
+    end
+
+    it "returns the underlying thread's backtrace" do
+      expect(subject.debug).to eq(['foo'])
+    end
+  end
+
   describe '#id' do
     context 'when started' do
       let(:thread) { instance_spy('Thread', object_id: 1234) }

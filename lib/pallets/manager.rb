@@ -1,6 +1,6 @@
 module Pallets
   class Manager
-    attr_reader :workers, :timeout
+    attr_reader :workers, :scheduler
 
     def initialize(concurrency: Pallets.configuration.concurrency)
       @workers = concurrency.times.map { Worker.new(self) }
