@@ -95,9 +95,18 @@ describe Pallets::Backends::Redis do
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    it 'adds the context buffer to the context' do
-      subject.save('baz', 'foo', 'baz' => 'qux')
-      expect(redis.hgetall('test:contexts:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
+    context 'with a non-empty context buffer' do
+      it 'adds the context buffer to the context' do
+        subject.save('baz', 'foo', 'baz' => 'qux')
+        expect(redis.hgetall('test:contexts:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
+      end
+    end
+
+    context 'with an empty context buffer' do
+      it 'does not touch the context' do
+        subject.save('baz', 'foo', {})
+        expect(redis.hgetall('test:contexts:baz')).to eq('foo' => 'bar')
+      end
     end
 
     context 'with more jobs to queue' do
