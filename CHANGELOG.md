@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - shared contexts (#9)
-- handle TERM signals (#15)
+- handle TERM and TTIN signals (#15, #17)
 
 ### Removed
 - support for Ruby 2.1 & 2.2 (#13)
