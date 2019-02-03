@@ -33,6 +33,15 @@ module Pallets
       case signal
       when 'INT', 'TERM'
         raise Interrupt
+      when 'TTIN'
+        print_backtraces
+      end
+    end
+
+    def print_backtraces
+      (@manager.workers + [@manager.scheduler]).each do |actor|
+        Pallets.logger.info "Debugging #{actor.id}"
+        Pallets.logger.info actor.debug.join("\n") unless actor.debug.nil?
       end
     end
 
@@ -93,7 +102,7 @@ module Pallets
     end
 
     def setup_signal_handlers
-      %w(INT TERM).each do |signal|
+      %w(INT TERM TTIN).each do |signal|
         trap signal do
           @signal_queue.push signal
         end
