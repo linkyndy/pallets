@@ -99,7 +99,7 @@ module Pallets
               [@workflow_key % workflow_id, @queue_key, @eta_key % workflow_id],
               jobs_with_order
             )
-            client.hmset(@context_key % workflow_id, *context.to_a)
+            client.hmset(@context_key % workflow_id, *context.to_a) unless context.empty?
           end
         end
       end

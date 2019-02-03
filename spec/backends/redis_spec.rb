@@ -257,11 +257,6 @@ describe Pallets::Backends::Redis do
       expect(redis.get('test:etas:baz')).to eq('2')
     end
 
-    it 'sets the context' do
-      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
-      expect(redis.hgetall('test:contexts:baz')).to eq('foo' => 'bar')
-    end
-
     it 'adds pending jobs to workflow set' do
       subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
       expect(redis.zrange('test:workflows:baz', 0, -1, with_scores: true)).to eq([['bar', 1]])
@@ -270,6 +265,20 @@ describe Pallets::Backends::Redis do
     it 'queues jobs that are ready to be processed' do
       subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
       expect(redis.lrange('test:queue', 0, -1)).to eq(['foo'])
+    end
+
+    context 'with a non-empty context' do
+      it 'sets the context' do
+        subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
+        expect(redis.hgetall('test:contexts:baz')).to eq('foo' => 'bar')
+      end
+    end
+
+    context 'with an empty context' do
+      it 'does not set the context' do
+        subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], {})
+        expect(redis.exists('test:contexts:baz')).to be(false)
+      end
     end
   end
 end
