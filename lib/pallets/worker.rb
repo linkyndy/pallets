@@ -61,8 +61,8 @@ module Pallets
         job_hash = serializer.load(job)
       rescue
         # We ensure only valid jobs are created. If something fishy reaches this
-        # point, just discard it
-        backend.discard(job)
+        # point, just give up on it
+        backend.give_up(job, job, Time.now.to_f)
         return
       end
 
