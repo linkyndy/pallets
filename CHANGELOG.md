@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - handle TERM and TTIN signals (#15, #17)
 - configure how long failed jobs are kept (#21)
 
+### Changed
+- malformed jobs are given up rather than discarded (#22)
+
 ### Removed
 - support for Ruby 2.1 & 2.2 (#13)
 
