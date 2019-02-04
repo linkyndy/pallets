@@ -52,16 +52,6 @@ module Pallets
         end
       end
 
-      def discard(job)
-        @pool.execute do |client|
-          client.eval(
-            @scripts['discard'],
-            [@reliability_queue_key, @reliability_set_key],
-            [job]
-          )
-        end
-      end
-
       def retry(job, old_job, at)
         @pool.execute do |client|
           client.eval(

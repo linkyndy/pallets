@@ -153,24 +153,6 @@ describe Pallets::Backends::Redis do
     end
   end
 
-  describe '#discard' do
-    before do
-      # Set up reliability components
-      redis.lpush('test:reliability-queue', 'foo')
-      redis.zadd('test:reliability-set', 123, 'foo')
-    end
-
-    it 'removes the job from the reliability queue' do
-      subject.discard('foo')
-      expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
-    end
-
-    it 'removes the job from the reliability set' do
-      subject.discard('foo')
-      expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
-    end
-  end
-
   describe '#retry' do
     before do
       # Set up reliability components
