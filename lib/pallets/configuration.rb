@@ -12,6 +12,10 @@ module Pallets
     # Number of workers to process jobs
     attr_accessor :concurrency
 
+    # Minimum number of seconds a failed job stays in the given up set. After
+    # this period, jobs will be permanently deleted
+    attr_accessor :failed_job_lifespan
+
     # Number of seconds allowed for a job to be processed. If a job exceeds this
     # period, it is considered failed, and scheduled to be processed again
     attr_accessor :job_timeout
@@ -34,7 +38,8 @@ module Pallets
       @backend_args = {}
       @blocking_timeout = 5
       @concurrency = 2
-      @job_timeout = 1800 # 30 minutes
+      @failed_job_lifespan = 7_776_000 # 3 months
+      @job_timeout = 1_800 # 30 minutes
       @max_failures = 3
       @namespace = 'pallets'
       @pool_size = 5

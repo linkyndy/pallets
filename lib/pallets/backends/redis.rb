@@ -3,9 +3,10 @@ require 'redis'
 module Pallets
   module Backends
     class Redis < Base
-      def initialize(namespace:, blocking_timeout:, job_timeout:, pool_size:, **options)
+      def initialize(namespace:, blocking_timeout:, failed_job_lifespan:, job_timeout:, pool_size:, **options)
         @namespace = namespace
         @blocking_timeout = blocking_timeout
+        @failed_job_lifespan = failed_job_lifespan
         @job_timeout = job_timeout
         @pool = Pallets::Pool.new(pool_size) { ::Redis.new(options) }
 
@@ -76,7 +77,7 @@ module Pallets
           client.eval(
             @scripts['give_up'],
             [@given_up_set_key, @reliability_queue_key, @reliability_set_key],
-            [at, job, old_job]
+            [at, job, old_job, Time.now.to_f - @failed_job_lifespan]
           )
         end
       end

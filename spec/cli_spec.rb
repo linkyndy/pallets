@@ -58,6 +58,17 @@ describe Pallets::CLI do
     end
   end
 
+  context 'with --failed-job-lifespan provided' do
+    before do
+      stub_const('ARGV', ['--failed-job-lifespan=123'])
+    end
+
+    it 'sets the failed job lifespan' do
+      subject
+      expect(configuration).to have_received(:failed_job_lifespan=).with(123)
+    end
+  end
+
   context 'with --namespace provided' do
     before do
       stub_const('ARGV', ['--namespace=foo'])
@@ -121,6 +132,17 @@ describe Pallets::CLI do
     it 'sets the given serializer' do
       subject
       expect(configuration).to have_received(:serializer=).with('foo')
+    end
+  end
+
+  context 'with --job-timeout provided' do
+    before do
+      stub_const('ARGV', ['--job-timeout=123'])
+    end
+
+    it 'sets the given job timeout' do
+      subject
+      expect(configuration).to have_received(:job_timeout=).with(123)
     end
   end
 

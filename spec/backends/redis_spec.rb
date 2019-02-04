@@ -5,6 +5,7 @@ describe Pallets::Backends::Redis do
     Pallets::Backends::Redis.new(
       namespace: 'test',
       blocking_timeout: 1,
+      failed_job_lifespan: 100,
       job_timeout: 10,
       pool_size: 1,
       db: 15
@@ -213,9 +214,22 @@ describe Pallets::Backends::Redis do
     end
 
     it 'adds the new job to the given up set' do
-      Timecop.freeze do
+      Timecop.freeze(Time.at(1234)) do
         subject.give_up('foonew', 'foo', 1234)
         expect(redis.zrange('test:given-up-set', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
+      end
+    end
+
+    context 'with a given up job that failed a long time ago' do
+      before do
+        redis.zadd('test:given-up-set', Time.at(123).to_f, 'bar')
+      end
+
+      it 'removes the given up job from the given up set' do
+        Timecop.freeze(Time.at(1234)) do
+          subject.give_up('foonew', 'foo', 1234)
+          expect(redis.zrange('test:given-up-set', 0, -1)).not_to include('bar')
+        end
       end
     end
   end
