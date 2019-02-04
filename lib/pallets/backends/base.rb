@@ -15,17 +15,17 @@ module Pallets
         raise NotImplementedError
       end
 
-      # Discard a malformed job
+      # Discards a malformed job
       def discard(job)
         raise NotImplementedError
       end
 
-      # Schedule a failed job for retry
+      # Schedules a failed job for retry
       def retry(job, old_job, at)
         raise NotImplementedError
       end
 
-      # Give up job after repeteadly failing to process it
+      # Gives up job after repeteadly failing to process it
       def give_up(job, old_job, at)
         raise NotImplementedError
       end

@@ -27,7 +27,7 @@ end
 MyWorkflow.new.run
 ```
 
-That's basically it! Curious for more? Read on!
+That's basically it! Curious for more? Read on or [check the examples](examples/)!
 
 > Don't forget to run pallets, so it can process your tasks: `bundle exec pallets -r ./my_workflow`
 

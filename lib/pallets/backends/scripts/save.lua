@@ -1,5 +1,7 @@
--- Remove job from reliability queue
+-- NOTE: We store the job as the last argument passed to this script because it
+--       is more efficient to pop in Lua than shift
 local job = table.remove(ARGV)
+-- Remove job from reliability queue
 redis.call("LREM", KEYS[3], 0, job)
 redis.call("ZREM", KEYS[4], job)
 
