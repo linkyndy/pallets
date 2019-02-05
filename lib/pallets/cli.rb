@@ -61,6 +61,10 @@ module Pallets
           Pallets.configuration.max_failures = max_failures
         end
 
+        opts.on('-l', '--failed-job-lifespan NUM', Integer, 'Seconds a job stays in the given up set') do |failed_job_lifespan|
+          Pallets.configuration.failed_job_lifespan = failed_job_lifespan
+        end
+
         opts.on('-n', '--namespace NAME', 'Namespace to use for backend') do |namespace|
           Pallets.configuration.namespace = namespace
         end
@@ -79,6 +83,10 @@ module Pallets
 
         opts.on('-s', '--serializer NAME', 'Serializer to use') do |serializer|
           Pallets.configuration.serializer = serializer
+        end
+
+        opts.on('-t', '--job-timeout NUM', Integer, 'Seconds allowed for a job to be processed') do |job_timeout|
+          Pallets.configuration.job_timeout = job_timeout
         end
 
         opts.on('-u', '--blocking-timeout NUM', Integer, 'Seconds to block while waiting for work') do |blocking_timeout|
