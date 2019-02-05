@@ -153,24 +153,6 @@ describe Pallets::Backends::Redis do
     end
   end
 
-  describe '#discard' do
-    before do
-      # Set up reliability components
-      redis.lpush('test:reliability-queue', 'foo')
-      redis.zadd('test:reliability-set', 123, 'foo')
-    end
-
-    it 'removes the job from the reliability queue' do
-      subject.discard('foo')
-      expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
-    end
-
-    it 'removes the job from the reliability set' do
-      subject.discard('foo')
-      expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
-    end
-  end
-
   describe '#retry' do
     before do
       # Set up reliability components
@@ -204,30 +186,30 @@ describe Pallets::Backends::Redis do
     end
 
     it 'removes the job from the reliability queue' do
-      subject.give_up('foonew', 'foo', 1234)
+      subject.give_up('foonew', 'foo')
       expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.give_up('foonew', 'foo', 1234)
+      subject.give_up('foonew', 'foo')
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     it 'adds the new job to the given up set' do
-      Timecop.freeze(Time.at(1234)) do
-        subject.give_up('foonew', 'foo', 1234)
-        expect(redis.zrange('test:given-up-set', 0, -1, with_scores: true)).to eq([['foonew', 1234]])
+      Timecop.freeze do
+        subject.give_up('foonew', 'foo')
+        expect(redis.zrange('test:given-up-set', 0, -1, with_scores: true)).to eq([['foonew', Time.now.to_f]])
       end
     end
 
     context 'with a given up job that failed a long time ago' do
       before do
-        redis.zadd('test:given-up-set', Time.at(123).to_f, 'bar')
+        redis.zadd('test:given-up-set', 1234, 'bar')
       end
 
       it 'removes the given up job from the given up set' do
-        Timecop.freeze(Time.at(1234)) do
-          subject.give_up('foonew', 'foo', 1234)
+        Timecop.freeze do
+          subject.give_up('foonew', 'foo')
           expect(redis.zrange('test:given-up-set', 0, -1)).not_to include('bar')
         end
       end
