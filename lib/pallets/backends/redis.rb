@@ -62,12 +62,12 @@ module Pallets
         end
       end
 
-      def give_up(job, old_job, at)
+      def give_up(job, old_job)
         @pool.execute do |client|
           client.eval(
             @scripts['give_up'],
             [@given_up_set_key, @reliability_queue_key, @reliability_set_key],
-            [at, job, old_job, Time.now.to_f - @failed_job_lifespan]
+            [Time.now.to_f, job, old_job, Time.now.to_f - @failed_job_lifespan]
           )
         end
       end

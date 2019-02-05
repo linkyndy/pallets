@@ -62,7 +62,7 @@ module Pallets
       rescue
         # We ensure only valid jobs are created. If something fishy reaches this
         # point, just give up on it
-        backend.give_up(job, job, Time.now.to_f)
+        backend.give_up(job, job)
         return
       end
 
@@ -95,7 +95,7 @@ module Pallets
         retry_at = Time.now.to_f + backoff_in_seconds(failures)
         backend.retry(new_job, job, retry_at)
       else
-        backend.give_up(new_job, job, Time.now.to_f)
+        backend.give_up(new_job, job)
         Pallets.logger.info "Gave up after #{failures} failed attempts", extract_metadata(job_hash)
       end
     end
