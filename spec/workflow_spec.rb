@@ -11,6 +11,9 @@ describe Pallets::Workflow do
     task :qux => :bar
   end
 
+  class EmptyWorkflow < Pallets::Workflow
+  end
+
   subject { TestWorkflow.new(context) }
 
   describe '#id' do
@@ -26,6 +29,16 @@ describe Pallets::Workflow do
       allow(Pallets.configuration).to receive(:max_failures).and_return(3)
       allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:serializer).and_return(serializer)
+    end
+
+    context 'with an empty graph' do
+      subject { EmptyWorkflow.new(context) }
+
+      it 'raises a WorkflowError' do
+        expect do
+          subject.run
+        end.to raise_error(Pallets::WorkflowError, /no tasks/)
+      end
     end
 
     it 'builds a job for each task and uses the serializer to dump it' do

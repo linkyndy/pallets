@@ -15,6 +15,14 @@ describe Pallets::DSL::Workflow do
   end
 
   describe '#task' do
+    context 'with no arguments' do
+      it 'raises an error' do
+        expect do
+          subject.class_eval { task }
+        end.to raise_error(Pallets::WorkflowError, /no name/)
+      end
+    end
+
     context 'with a positional argument' do
       it 'identifies the name as the positional argument' do
         subject.class_eval { task :eat }

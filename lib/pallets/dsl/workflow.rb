@@ -7,7 +7,11 @@ module Pallets
         else
           options.first
         end
-        raise ArgumentError, "A task must have a name" unless name
+
+        unless name
+          raise WorkflowError, "Task has no name. Provide a name using " \
+                               "`task :name, *args` or `task name: :arg` syntax"
+        end
 
         # Handle nils, symbols or arrays consistently
         name = name.to_sym
