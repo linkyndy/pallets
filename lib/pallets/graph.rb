@@ -16,6 +16,10 @@ module Pallets
       @nodes[node]
     end
 
+    def empty?
+      @nodes.empty?
+    end
+
     # Returns nodes topologically sorted, together with their order (number of
     # nodes that have to be executed prior)
     def sorted_with_order

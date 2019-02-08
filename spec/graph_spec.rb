@@ -21,6 +21,24 @@ describe Pallets::Graph do
     end
   end
 
+  describe '#empty?' do
+    context 'with no nodes added' do
+      it 'returns true' do
+        expect(subject.empty?).to be(true)
+      end
+    end
+
+    context 'with nodes added' do
+      before do
+        subject.add(:foo, [])
+      end
+
+      it 'returns false' do
+        expect(subject.empty?).to be(false)
+      end
+    end
+  end
+
   describe '#sorted_with_order' do
     let(:graph) do
       Pallets::Graph.new.tap do |g|
