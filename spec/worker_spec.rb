@@ -194,6 +194,7 @@ describe Pallets::Worker do
       allow(task_class).to receive(:new).and_return(task)
       allow(backend).to receive(:get_context).and_return(foo: :bar)
       allow(subject).to receive(:handle_job_error)
+      allow(subject).to receive(:handle_job_return_false)
       allow(subject).to receive(:handle_job_success)
     end
 
@@ -233,6 +234,7 @@ describe Pallets::Worker do
       it 'does not invoke any handler' do
         subject.send(:process, job)
         expect(subject).not_to have_received(:handle_job_error)
+        expect(subject).not_to have_received(:handle_job_return_false)
         expect(subject).not_to have_received(:handle_job_success)
       end
     end
@@ -266,6 +268,17 @@ describe Pallets::Worker do
       it 'calls the error handler' do
         subject.send(:process, job)
         expect(subject).to have_received(:handle_job_error).with(a_kind_of(ArgumentError), job, job_hash)
+      end
+    end
+
+    context 'when the task returns false' do
+      before do
+        allow(task).to receive(:run).and_return(false)
+      end
+
+      it 'calls the return false handler' do
+        subject.send(:process, job)
+        expect(subject).to have_received(:handle_job_return_false).with(job, job_hash)
       end
     end
 
@@ -366,6 +379,41 @@ describe Pallets::Worker do
           subject.send(:handle_job_error, ex, job, job_hash)
           expect(backend).to have_received(:give_up).with('foobar', job)
         end
+      end
+    end
+  end
+
+  describe '#handle_job_return_false' do
+    let(:backend) { instance_spy('Pallets::Backends::Base') }
+    let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
+    let(:job) { double }
+    let(:job_hash) do
+      {
+        'workflow_id' => 'qux',
+        'class_name' => 'Foo',
+        'max_failures' => 15
+      }
+    end
+
+    before do
+      allow(subject).to receive(:backend).and_return(backend)
+      allow(subject).to receive(:serializer).and_return(serializer)
+    end
+
+    it 'builds a new job and uses the serializer to dump it' do
+      Timecop.freeze do
+        subject.send(:handle_job_return_false, job, job_hash)
+        expect(serializer).to have_received(:dump).with(job_hash.merge(
+          'given_up_at' => Time.now.to_f,
+          'reason' => 'returned_false'
+        ))
+      end
+    end
+
+    it 'tells the backend to give up the job' do
+      Timecop.freeze do
+        subject.send(:handle_job_return_false, job, job_hash)
+        expect(backend).to have_received(:give_up).with('foobar', job)
       end
     end
   end
