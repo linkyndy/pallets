@@ -94,9 +94,10 @@ module Pallets
       failures = job_hash.fetch('failures', 0) + 1
       new_job = serializer.dump(job_hash.merge(
         'failures' => failures,
-        'failed_at' => Time.now.to_f,
+        'given_up_at' => Time.now.to_f,
         'error_class' => ex.class.name,
-        'error_message' => ex.message
+        'error_message' => ex.message,
+        'reason' => 'error'
       ))
       if failures < job_hash['max_failures']
         retry_at = Time.now.to_f + backoff_in_seconds(failures)

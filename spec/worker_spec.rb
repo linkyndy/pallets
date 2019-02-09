@@ -314,9 +314,10 @@ describe Pallets::Worker do
           subject.send(:handle_job_error, ex, job, job_hash)
           expect(serializer).to have_received(:dump).with(job_hash.merge(
             'failures' => 1,
-            'failed_at' => Time.now.to_f,
+            'given_up_at' => Time.now.to_f,
             'error_class' => 'ArgumentError',
-            'error_message' => 'foo'
+            'error_message' => 'foo',
+            'reason' => 'error'
           ))
         end
       end
@@ -330,9 +331,10 @@ describe Pallets::Worker do
           'class_name' => 'Foo',
           'max_failures' => 15,
           'failures' => 1,
-          'failed_at' => Time.now.to_f,
+          'given_up_at' => Time.now.to_f,
           'error_class' => 'KeyError',
-          'error_message' => 'bar'
+          'error_message' => 'bar',
+          'reason' => 'error'
         }
       end
 
@@ -341,7 +343,7 @@ describe Pallets::Worker do
           subject.send(:handle_job_error, ex, job, job_hash)
           expect(serializer).to have_received(:dump).with(job_hash.merge(
             'failures' => 2,
-            'failed_at' => Time.now.to_f,
+            'given_up_at' => Time.now.to_f,
             'error_class' => 'ArgumentError',
             'error_message' => 'foo'
           ))
@@ -368,9 +370,10 @@ describe Pallets::Worker do
           'class_name' => 'Foo',
           'max_failures' => 15,
           'failures' => 15,
-          'failed_at' => Time.now.to_f,
+          'given_up_at' => Time.now.to_f,
           'error_class' => 'KeyError',
-          'error_message' => 'bar'
+          'error_message' => 'bar',
+          'reason' => 'error'
         }
       end
 
