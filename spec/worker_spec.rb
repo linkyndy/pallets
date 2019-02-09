@@ -282,20 +282,21 @@ describe Pallets::Worker do
     let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
     let(:ex) { ArgumentError.new('foo') }
     let(:job) { double }
-    let(:job_hash) do
-      {
-        'workflow_id' => 'qux',
-        'class_name' => 'Foo',
-        'max_failures' => 15
-      }
-    end
 
     before do
+      allow(Pallets.configuration).to receive(:max_failures).and_return(15)
       allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:serializer).and_return(serializer)
     end
 
     context 'with no previous failures' do
+      let(:job_hash) do
+        {
+          'workflow_id' => 'qux',
+          'class_name' => 'Foo'
+        }
+      end
+
       it 'builds a new job and uses the serializer to dump it' do
         Timecop.freeze do
           subject.send(:handle_job_error, ex, job, job_hash)
@@ -315,7 +316,6 @@ describe Pallets::Worker do
           'context' => { bar: :baz },
           'workflow_id' => 'qux',
           'class_name' => 'Foo',
-          'max_failures' => 15,
           'failures' => 1,
           'failed_at' => Time.now.to_f,
           'error_class' => 'KeyError',
@@ -336,35 +336,91 @@ describe Pallets::Worker do
       end
     end
 
-    context 'with the number of failures within the threshold' do
-      it 'tells the backend to retry the job' do
-        Timecop.freeze do
-          subject.send(:handle_job_error, ex, job, job_hash)
-          expect(backend).to have_received(:retry).with(
-            'foobar', job, a_value > Time.now.to_f
-          )
+    context 'with max_failures set on the job' do
+      let(:job_hash) do
+        {
+          'workflow_id' => 'qux',
+          'class_name' => 'Foo',
+          'max_failures' => 15
+        }
+      end
+
+      context 'and with the number of failures within the threshold' do
+        it 'tells the backend to retry the job' do
+          Timecop.freeze do
+            subject.send(:handle_job_error, ex, job, job_hash)
+            expect(backend).to have_received(:retry).with(
+              'foobar', job, a_value > Time.now.to_f
+            )
+          end
+        end
+      end
+
+      context 'with the number of failures reaching the threshold' do
+        let(:job_hash) do
+          {
+            'workflow_id' => 'qux',
+            'context' => { bar: :baz },
+            'class_name' => 'Foo',
+            'max_failures' => 15,
+            'failures' => 14,
+            'failed_at' => Time.now.to_f,
+            'error_class' => 'KeyError',
+            'error_message' => 'bar'
+          }
+        end
+
+        it 'tells the backend to give up the job' do
+          Timecop.freeze do
+            subject.send(:handle_job_error, ex, job, job_hash)
+            expect(backend).to have_received(:give_up).with('foobar', job)
+          end
         end
       end
     end
 
-    context 'with the number of failures exceeding the threshold' do
+    context 'without max_failures set on the job' do
       let(:job_hash) do
         {
           'workflow_id' => 'qux',
-          'context' => { bar: :baz },
-          'class_name' => 'Foo',
-          'max_failures' => 15,
-          'failures' => 15,
-          'failed_at' => Time.now.to_f,
-          'error_class' => 'KeyError',
-          'error_message' => 'bar'
+          'class_name' => 'Foo'
         }
       end
 
-      it 'tells the backend to give up the job' do
-        Timecop.freeze do
-          subject.send(:handle_job_error, ex, job, job_hash)
-          expect(backend).to have_received(:give_up).with('foobar', job)
+      it 'takes the configured value' do
+        subject.send(:handle_job_error, ex, job, job_hash)
+        expect(Pallets.configuration).to have_received(:max_failures)
+      end
+
+      context 'and with the number of failures within the threshold' do
+        it 'tells the backend to retry the job' do
+          Timecop.freeze do
+            subject.send(:handle_job_error, ex, job, job_hash)
+            expect(backend).to have_received(:retry).with(
+              'foobar', job, a_value > Time.now.to_f
+            )
+          end
+        end
+      end
+
+      context 'with the number of failures reaching the threshold' do
+        let(:job_hash) do
+          {
+            'workflow_id' => 'qux',
+            'context' => { bar: :baz },
+            'class_name' => 'Foo',
+            'failures' => 14,
+            'failed_at' => Time.now.to_f,
+            'error_class' => 'KeyError',
+            'error_message' => 'bar'
+          }
+        end
+
+        it 'tells the backend to give up the job' do
+          Timecop.freeze do
+            subject.send(:handle_job_error, ex, job, job_hash)
+            expect(backend).to have_received(:give_up).with('foobar', job)
+          end
         end
       end
     end

@@ -8,7 +8,6 @@ describe Pallets::DSL::Workflow do
   let(:graph) { instance_spy('Pallets::Graph') }
 
   before do
-    allow(Pallets.configuration).to receive(:max_failures).and_return(3)
     # Stub external calls so we can test the DSL in isolation
     allow(subject).to receive(:task_config).and_return(task_config)
     allow(subject).to receive(:graph).and_return(graph)
@@ -111,11 +110,9 @@ describe Pallets::DSL::Workflow do
     end
 
     context 'without a :max_failures option provided' do
-      it 'configures the task with a default value' do
+      it 'does not configure the task' do
         subject.class_eval { task :pay }
-        expect(subject.task_config).to match(
-          pay: a_hash_including('max_failures' => 3)
-        )
+        expect(subject.task_config[:pay]).not_to have_key('max_failures')
       end
     end
 

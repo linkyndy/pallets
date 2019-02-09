@@ -19,12 +19,12 @@ module Pallets
         graph.add(name, dependencies)
 
         class_name = options[:class_name] || Pallets::Util.camelize(name)
-        max_failures = options[:max_failures] || Pallets.configuration.max_failures
+        max_failures = options[:max_failures]
 
         task_config[name] = {
-          'class_name' => class_name,
-          'max_failures' => max_failures
+          'class_name' => class_name
         }
+        task_config[name]['max_failures'] = max_failures if max_failures
 
         nil
       end

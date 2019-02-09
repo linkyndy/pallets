@@ -88,13 +88,14 @@ module Pallets
       Pallets.logger.warn "#{ex.class.name}: #{ex.message}", extract_metadata(job_hash)
       Pallets.logger.warn ex.backtrace.join("\n"), extract_metadata(job_hash) unless ex.backtrace.nil?
       failures = job_hash.fetch('failures', 0) + 1
+      max_failures = job_hash['max_failures'] || Pallets.configuration.max_failures
       new_job = serializer.dump(job_hash.merge(
         'failures' => failures,
         'failed_at' => Time.now.to_f,
         'error_class' => ex.class.name,
         'error_message' => ex.message
       ))
-      if failures < job_hash['max_failures']
+      if failures < max_failures
         retry_at = Time.now.to_f + backoff_in_seconds(failures)
         backend.retry(new_job, job, retry_at)
       else
