@@ -4,9 +4,10 @@ module Pallets
 
     attr_reader :context
 
-    def initialize(context = {})
+    def initialize(context_hash = {})
       @id = nil
-      @context = context
+      # Passed in context hash needs to be buffered
+      @context = Context.new.merge!(context_hash)
     end
 
     def run

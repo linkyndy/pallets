@@ -17,6 +17,18 @@ describe Pallets::Context do
     end
   end
 
+  describe '#merge!' do
+    it 'buffers the given hash' do
+      subject.merge!('foo' => 'bar')
+      expect(subject.buffer).to match('foo' => 'bar')
+    end
+
+    it 'does not alter the Hash interface' do
+      subject.merge!('foo' => 'bar')
+      expect(subject['foo']).to eq('bar')
+    end
+  end
+
   describe '#buffer' do
     context 'when no context has been set' do
       it 'returns an empty Hash' do
