@@ -57,10 +57,6 @@ module Pallets
           Pallets.configuration.concurrency = concurrency
         end
 
-        opts.on('-f', '--max-failures NUM', Integer, 'Maximum allowed number of failures per task') do |max_failures|
-          Pallets.configuration.max_failures = max_failures
-        end
-
         opts.on('-l', '--failed-job-lifespan NUM', Integer, 'Seconds a job stays in the given up set') do |failed_job_lifespan|
           Pallets.configuration.failed_job_lifespan = failed_job_lifespan
         end

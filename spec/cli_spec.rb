@@ -47,17 +47,6 @@ describe Pallets::CLI do
     end
   end
 
-  context 'with --max-failures provided' do
-    before do
-      stub_const('ARGV', ['--max-failures=123'])
-    end
-
-    it 'sets the given max failures' do
-      subject
-      expect(configuration).to have_received(:max_failures=).with(123)
-    end
-  end
-
   context 'with --failed-job-lifespan provided' do
     before do
       stub_const('ARGV', ['--failed-job-lifespan=123'])
