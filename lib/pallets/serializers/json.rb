@@ -2,7 +2,7 @@ require 'json'
 
 module Pallets
   module Serializers
-    class Json
+    class Json < Base
       def dump(data)
         JSON.generate(data)
       end
