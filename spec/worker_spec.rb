@@ -169,7 +169,7 @@ describe Pallets::Worker do
 
   describe '#process' do
     let(:backend) { instance_spy('Pallets::Backends::Base') }
-    let(:serializer) { instance_spy('Pallets::Serializers::Base', load: job_hash) }
+    let(:serializer) { instance_spy('Pallets::Serializers::Base') }
     let(:job) { double }
     let(:job_hash) do
       {
@@ -193,6 +193,8 @@ describe Pallets::Worker do
       allow(context_class).to receive(:[]).and_return(context)
       allow(task_class).to receive(:new).and_return(task)
       allow(backend).to receive(:get_context).and_return(foo: :bar)
+      allow(serializer).to receive(:load).and_return(job_hash)
+      allow(serializer).to receive(:load_context).and_return(baz: :qux)
       allow(subject).to receive(:handle_job_error)
       allow(subject).to receive(:handle_job_success)
     end
@@ -242,9 +244,14 @@ describe Pallets::Worker do
       expect(backend).to have_received(:get_context).with('qux')
     end
 
+    it 'uses the serializer to load the context' do
+      subject.send(:process, job)
+      expect(serializer).to have_received(:load_context).with(foo: :bar)
+    end
+
     it 'instantiates the correct context' do
       subject.send(:process, job)
-      expect(context_class).to have_received(:[]).with(foo: :bar)
+      expect(context_class).to have_received(:[]).with(baz: :qux)
     end
 
     it 'instantiates the correct task' do
@@ -372,7 +379,7 @@ describe Pallets::Worker do
 
   describe '#handle_job_success' do
     let(:backend) { instance_spy('Pallets::Backends::Base') }
-    let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
+    let(:serializer) { instance_spy('Pallets::Serializers::Base') }
     let(:job) { double }
     let(:job_hash) do
       {
@@ -384,11 +391,18 @@ describe Pallets::Worker do
     before do
       allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:serializer).and_return(serializer)
+      allow(serializer).to receive(:dump).and_return('foobar')
+      allow(serializer).to receive(:dump_context).and_return('bazqux')
+    end
+
+    it 'uses the serializer to dump the context buffer' do
+      subject.send(:handle_job_success, context, job, job_hash)
+      expect(serializer).to have_received(:dump_context).with(foo: :bar)
     end
 
     it 'tells the backend to save the job' do
       subject.send(:handle_job_success, context, job, job_hash)
-      expect(backend).to have_received(:save).with('qux', job, foo: :bar)
+      expect(backend).to have_received(:save).with('qux', job, 'bazqux')
     end
   end
 end

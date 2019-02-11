@@ -14,7 +14,7 @@ module Pallets
       raise WorkflowError, "#{self.class.name} has no tasks. Workflows "\
                            "must contain at least one task" if self.class.graph.empty?
 
-      backend.run_workflow(id, jobs_with_order, context)
+      backend.run_workflow(id, jobs_with_order, serializer.dump_context(context.buffer))
       id
     end
 

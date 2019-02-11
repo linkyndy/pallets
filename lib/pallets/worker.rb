@@ -71,7 +71,9 @@ module Pallets
 
       Pallets.logger.info "Started", extract_metadata(job_hash)
 
-      context = Context[backend.get_context(job_hash['workflow_id'])]
+      context = Context[
+        serializer.load_context(backend.get_context(job_hash['workflow_id']))
+      ]
 
       task_class = Pallets::Util.constantize(job_hash["class_name"])
       task = task_class.new(context)
@@ -104,7 +106,7 @@ module Pallets
     end
 
     def handle_job_success(context, job, job_hash)
-      backend.save(job_hash['workflow_id'], job, context.buffer)
+      backend.save(job_hash['workflow_id'], job, serializer.dump_context(context.buffer))
       Pallets.logger.info "Done", extract_metadata(job_hash)
     end
 
