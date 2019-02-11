@@ -18,7 +18,7 @@ describe Pallets::Serializers::Json do
 
     it 'generates JSON' do
       subject.dump('foo')
-      expect(json_class).to have_received(:generate).with('foo')
+      expect(json_class).to have_received(:generate).with('foo', quirks_mode: true)
     end
   end
 
@@ -29,7 +29,7 @@ describe Pallets::Serializers::Json do
 
     it 'parses JSON' do
       subject.load('foo')
-      expect(json_class).to have_received(:parse).with('foo')
+      expect(json_class).to have_received(:parse).with('foo', quirks_mode: true)
     end
   end
 
@@ -40,7 +40,7 @@ describe Pallets::Serializers::Json do
 
     it 'generates JSON for hash values' do
       subject.dump_context('foo' => 'bar')
-      expect(json_class).to have_received(:generate).with('bar')
+      expect(json_class).to have_received(:generate).with('bar', quirks_mode: true)
     end
   end
 
@@ -51,7 +51,7 @@ describe Pallets::Serializers::Json do
 
     it 'parses JSON for hash values' do
       subject.load_context('foo' => 'bar')
-      expect(json_class).to have_received(:parse).with('bar')
+      expect(json_class).to have_received(:parse).with('bar', quirks_mode: true)
     end
   end
 end
