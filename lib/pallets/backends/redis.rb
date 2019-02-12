@@ -82,7 +82,7 @@ module Pallets
         end
       end
 
-      def run_workflow(workflow_id, jobs_with_order, context)
+      def run_workflow(workflow_id, jobs_with_order, context_buffer)
         @pool.execute do |client|
           client.multi do
             client.eval(
@@ -90,7 +90,7 @@ module Pallets
               [@workflow_key % workflow_id, @queue_key, @eta_key % workflow_id],
               jobs_with_order
             )
-            client.hmset(@context_key % workflow_id, *context.to_a) unless context.empty?
+            client.hmset(@context_key % workflow_id, *context_buffer.to_a) unless context_buffer.empty?
           end
         end
       end

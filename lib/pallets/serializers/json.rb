@@ -2,13 +2,14 @@ require 'json'
 
 module Pallets
   module Serializers
-    class Json
+    class Json < Base
       def dump(data)
-        JSON.generate(data)
+        # TODO: Remove option after dropping support for Ruby 2.3
+        JSON.generate(data, quirks_mode: true)
       end
 
       def load(data)
-        JSON.parse(data)
+        JSON.parse(data, quirks_mode: true)
       end
     end
   end

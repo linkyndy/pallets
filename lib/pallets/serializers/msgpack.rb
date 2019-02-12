@@ -2,7 +2,7 @@ require 'msgpack'
 
 module Pallets
   module Serializers
-    class Msgpack
+    class Msgpack < Base
       def dump(data)
         MessagePack.pack(data)
       end

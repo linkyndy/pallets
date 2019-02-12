@@ -2,7 +2,9 @@ require 'spec_helper'
 
 describe Pallets::Workflow do
   let(:backend) { instance_spy('Pallets::Backends::Base') }
-  let(:context) { { foo: :bar } }
+  let(:context_class) { class_double('Pallets::Context').as_stubbed_const }
+  let(:context) { instance_spy('Pallets::Context', buffer: { foo: :bar }) }
+  let(:context_hash) { { foo: :bar } }
 
   class TestWorkflow < Pallets::Workflow
     task :foo
@@ -14,7 +16,19 @@ describe Pallets::Workflow do
   class EmptyWorkflow < Pallets::Workflow
   end
 
-  subject { TestWorkflow.new(context) }
+  subject { TestWorkflow.new(context_hash) }
+
+  before do
+    allow(context_class).to receive(:new).and_return(context)
+    allow(context).to receive(:merge!).and_return(context)
+    allow(subject).to receive(:backend).and_return(backend)
+  end
+
+  it 'initializes a new context and buffers given context hash' do
+    subject
+    expect(context_class).to have_received(:new)
+    expect(context).to have_received(:merge!).with(context_hash)
+  end
 
   describe '#id' do
     it 'returns an ID following a specific pattern' do
@@ -23,16 +37,17 @@ describe Pallets::Workflow do
   end
 
   describe '#run' do
-    let(:serializer) { instance_spy('Pallets::Serializers::Base', dump: 'foobar') }
+    let(:serializer) { instance_spy('Pallets::Serializers::Base') }
 
     before do
       allow(Pallets.configuration).to receive(:max_failures).and_return(3)
-      allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:serializer).and_return(serializer)
+      allow(serializer).to receive(:dump).and_return('foobar')
+      allow(serializer).to receive(:dump_context).and_return('bazqux')
     end
 
     context 'with an empty graph' do
-      subject { EmptyWorkflow.new(context) }
+      subject { EmptyWorkflow.new(context_hash) }
 
       it 'raises a WorkflowError' do
         expect do
@@ -56,12 +71,17 @@ describe Pallets::Workflow do
       end
     end
 
+    it 'uses the serializer to dump the context buffer' do
+      subject.run
+      expect(serializer).to have_received(:dump_context).with(foo: :bar)
+    end
+
     it 'tells the backend to run the workflow' do
       Timecop.freeze do
         subject.run
         expect(backend).to have_received(:run_workflow).with(a_kind_of(String), [
           [0, 'foobar'], [1, 'foobar'], [1, 'foobar'], [3, 'foobar']
-        ], context)
+        ], 'bazqux')
       end
     end
   end

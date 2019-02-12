@@ -4,16 +4,17 @@ module Pallets
 
     attr_reader :context
 
-    def initialize(context = {})
+    def initialize(context_hash = {})
       @id = nil
-      @context = context
+      # Passed in context hash needs to be buffered
+      @context = Context.new.merge!(context_hash)
     end
 
     def run
       raise WorkflowError, "#{self.class.name} has no tasks. Workflows "\
                            "must contain at least one task" if self.class.graph.empty?
 
-      backend.run_workflow(id, jobs_with_order, context)
+      backend.run_workflow(id, jobs_with_order, serializer.dump_context(context.buffer))
       id
     end
 
