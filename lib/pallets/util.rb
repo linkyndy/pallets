@@ -3,7 +3,7 @@ module Pallets
     extend self
 
     def camelize(str)
-      str.to_s.gsub(/(?:^|_)([a-z])/) { $1.upcase }
+      str.to_s.gsub(/(?:^|_)([a-zA-Z0-9])/) { $1.upcase }
     end
 
     def constantize(str)

@@ -8,10 +8,16 @@ describe Pallets::Util do
       ''            => '',
       'foo'         => 'Foo',
       'Foo'         => 'Foo',
+      'foo2'        => 'Foo2',
       'foo_bar'     => 'FooBar',
+      'foo_Bar'     => 'FooBar',
       'Foo_bar'     => 'FooBar',
+      'foo_2'       => 'Foo2',
+      'foo_bar2'    => 'FooBar2',
       'foo_bar_baz' => 'FooBarBaz',
+      'foo_2_bar'   => 'FooBar',
       'FooBar'      => 'FooBar',
+      'FooBar2'     => 'FooBar2',
       :foo_bar      => 'FooBar'
     }.each do |input, output|
       it "correctly camelizes #{input}" do
