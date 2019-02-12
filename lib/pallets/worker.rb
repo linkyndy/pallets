@@ -76,11 +76,15 @@ module Pallets
       task_class = Pallets::Util.constantize(job_hash["class_name"])
       task = task_class.new(context)
       begin
-        task.run
+        task_result = task.run
       rescue => ex
         handle_job_error(ex, job, job_hash)
       else
-        handle_job_success(context, job, job_hash)
+        if task_result == false
+          handle_job_return_false(job, job_hash)
+        else
+          handle_job_success(context, job, job_hash)
+        end
       end
     end
 
@@ -90,9 +94,10 @@ module Pallets
       failures = job_hash.fetch('failures', 0) + 1
       new_job = serializer.dump(job_hash.merge(
         'failures' => failures,
-        'failed_at' => Time.now.to_f,
+        'given_up_at' => Time.now.to_f,
         'error_class' => ex.class.name,
-        'error_message' => ex.message
+        'error_message' => ex.message,
+        'reason' => 'error'
       ))
       if failures < job_hash['max_failures']
         retry_at = Time.now.to_f + backoff_in_seconds(failures)
@@ -101,6 +106,15 @@ module Pallets
         backend.give_up(new_job, job)
         Pallets.logger.info "Gave up after #{failures} failed attempts", extract_metadata(job_hash)
       end
+    end
+
+    def handle_job_return_false(job, job_hash)
+      new_job = serializer.dump(job_hash.merge(
+        'given_up_at' => Time.now.to_f,
+        'reason' => 'returned_false'
+      ))
+      backend.give_up(new_job, job)
+      Pallets.logger.info "Gave up after returning false", extract_metadata(job_hash)
     end
 
     def handle_job_success(context, job, job_hash)
