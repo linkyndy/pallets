@@ -1,29 +1,23 @@
 module Pallets
   module DSL
     module Workflow
-      def task(*args, **options, &block)
-        name, depends_on = if args.any?
-          [args.first, options[:depends_on]]
+      def task(arg, depends_on: nil, max_failures: nil, &block)
+        klass, dependencies = case arg
+        when Hash
+          # The `task Foo => Bar` notation
+          arg.first
         else
-          options.first
+          # The `task Foo, depends_on: Bar` notation
+          [arg, depends_on]
         end
 
-        unless name
-          raise WorkflowError, "Task has no name. Provide a name using " \
-                               "`task :name, *args` or `task name: :arg` syntax"
-        end
+        class_name = klass.to_s
+        dependencies = Array(dependencies).compact.uniq.map(&:to_s)
+        graph.add(class_name, dependencies)
 
-        # Handle nils, symbols or arrays consistently
-        name = name.to_sym
-        dependencies = Array(depends_on).compact.map(&:to_sym)
-        graph.add(name, dependencies)
-
-        class_name = options[:class_name] || Pallets::Util.camelize(name)
-        max_failures = options[:max_failures] || Pallets.configuration.max_failures
-
-        task_config[name] = {
+        task_config[class_name] = {
           'class_name' => class_name,
-          'max_failures' => max_failures
+          'max_failures' => max_failures || Pallets.configuration.max_failures
         }
 
         nil
