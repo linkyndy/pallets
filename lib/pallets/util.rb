@@ -2,10 +2,6 @@ module Pallets
   module Util
     extend self
 
-    def camelize(str)
-      str.to_s.gsub(/(?:^|_)([a-z])/) { $1.upcase }
-    end
-
     def constantize(str)
       names = str.split('::')
 
