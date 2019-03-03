@@ -7,10 +7,10 @@ describe Pallets::Workflow do
   let(:context_hash) { { foo: :bar } }
 
   class TestWorkflow < Pallets::Workflow
-    task :foo
-    task :bar => :foo
-    task :baz => :foo
-    task :qux => :bar
+    task 'Foo'
+    task 'Bar' => 'Foo'
+    task 'Baz' => 'Foo'
+    task 'Qux' => 'Bar'
   end
 
   class EmptyWorkflow < Pallets::Workflow
