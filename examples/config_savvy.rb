@@ -26,8 +26,8 @@ Pallets.configure do |c|
 end
 
 class ConfigSavvy < Pallets::Workflow
-  task :volatile
-  task :success => :volatile
+  task 'Volatile'
+  task 'Success' => 'Volatile'
 end
 
 class Volatile < Pallets::Task

@@ -1,12 +1,12 @@
 require 'pallets'
 
 class DoGroceries < Pallets::Workflow
-  task :enter_shop
-  task :get_shopping_cart => :enter_shop
-  task :put_milk => :get_shopping_cart
-  task :put_bread => :get_shopping_cart
-  task :pay => [:put_milk, :put_bread]
-  task :go_home => :pay
+  task 'EnterShop'
+  task 'GetShoppingCart' => 'EnterShop'
+  task 'PutMilk' => 'GetShoppingCart'
+  task 'PutBread' => 'GetShoppingCart'
+  task 'Pay' => ['PutMilk', 'PutBread']
+  task 'GoHome' => 'Pay'
 end
 
 class EnterShop < Pallets::Task
