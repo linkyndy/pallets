@@ -91,23 +91,31 @@ describe Pallets::CLI do
   end
 
   context 'with --require provided' do
-    context 'and a valid path' do
+    before do
+      # Need to stub require, but can't use Kernel or subject
+      allow_any_instance_of(Pallets::CLI).to receive(:require)
+      stub_const('ARGV', ['--require=foo'])
+    end
+
+    context 'and a valid file path' do
       before do
-        stub_const('ARGV', ['--require=spec_helper'])
+        allow(File).to receive(:directory?).and_return(false)
       end
 
-      it 'does not raise an error' do
-        expect { subject }.not_to raise_error
+      it 'loads the path' do
+        expect_any_instance_of(Pallets::CLI).to receive(:require).with('foo')
+        subject
       end
     end
 
-    context 'and a path that does not exist' do
+    context 'and a valid directory path' do
       before do
-        stub_const('ARGV', ['--require=foo'])
+        allow(File).to receive(:directory?).and_return(true)
       end
 
-      it 'raises a LoadError' do
-        expect { subject }.to raise_error(LoadError)
+      it 'loads the path' do
+        expect_any_instance_of(Pallets::CLI).to receive(:require).with(%r{/.*foo/config/environment.rb})
+        subject
       end
     end
   end

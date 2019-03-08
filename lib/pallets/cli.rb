@@ -73,8 +73,12 @@ module Pallets
           Pallets.logger.level = Logger::ERROR
         end
 
-        opts.on('-r', '--require PATH', 'Path containing workflow definitions') do |path|
-          require(path)
+        opts.on('-r', '--require PATH', 'Path to file containing workflow definitions or directory containing Rails application') do |path|
+          if File.directory?(path)
+            require File.expand_path("#{path}/config/environment.rb")
+          else
+            require(path)
+          end
         end
 
         opts.on('-s', '--serializer NAME', 'Serializer to use') do |serializer|
