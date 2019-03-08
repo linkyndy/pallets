@@ -1,7 +1,7 @@
 require 'pallets'
 
 class HelloWorld < Pallets::Workflow
-  task :echo
+  task 'Echo'
 end
 
 class Echo < Pallets::Task

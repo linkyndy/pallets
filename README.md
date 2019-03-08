@@ -11,10 +11,10 @@ Toy workflow engine, written in Ruby
 require 'pallets'
 
 class MyWorkflow < Pallets::Workflow
-  task :foo
-  task :bar => :foo
-  task :baz => :foo
-  task :qux => [:bar, :baz]
+  task Foo
+  task Bar => Foo
+  task Baz => Foo
+  task Qux => [Bar, Baz]
 end
 
 class Foo < Pallets::Task
@@ -73,6 +73,49 @@ end
 ```
 
 For the complete set of options, see [pallets/configuration.rb](lib/pallets/configuration.rb)
+
+## Cookbook
+
+### DSL
+
+Pallets is designed for developers' happiness. Its DSL aims to be as beautiful
+and readable as possible, while still enabling complex scenarios to be performed.
+
+```ruby
+# All workflows must subclass Pallets::Workflow
+class WashClothes < Pallets::Workflow
+  # The simplest task
+  task BuyDetergent
+
+  # Another task; since it has no dependencies, it will be executed in parallel
+  # with BuyDetergent
+  # TIP: Use a String argument when task is not _yet_ loaded
+  task 'BuySoftener'
+
+  # We're not doing it in real life, but we use it to showcase our first dependency!
+  task DilluteDetergent => BuyDetergent
+
+  # We're getting more complex here! This is the alternate way of defining
+  # dependencies (which can be several, by the way!). Choose the style that fits
+  # you best
+  task TurnOnWashingMachine, depends_on: [BuyDetergent, 'BuySoftener']
+
+  # Specify how many times a task is allowed to fail. If max_failures is reached
+  # the task is given up
+  task SelectProgram => TurnOnWashingMachine, max_failures: 2
+end
+
+# Every task must be a subclass of Pallets::Task
+class BuyDetergent < Pallets::Task
+  # Tasks must implement this method; here you can define whatever rocket science
+  # your task needs to perform!
+  def run
+    # ...do whatever...
+  end
+end
+
+# We're omitting the other task definitions for now; you shouldn't!
+```
 
 ## Motivation
 

@@ -3,23 +3,6 @@ require 'spec_helper'
 describe Pallets::Util do
   subject { described_class }
 
-  describe '.camelize' do
-    {
-      ''            => '',
-      'foo'         => 'Foo',
-      'Foo'         => 'Foo',
-      'foo_bar'     => 'FooBar',
-      'Foo_bar'     => 'FooBar',
-      'foo_bar_baz' => 'FooBarBaz',
-      'FooBar'      => 'FooBar',
-      :foo_bar      => 'FooBar'
-    }.each do |input, output|
-      it "correctly camelizes #{input}" do
-        expect(subject.camelize(input)).to eq(output)
-      end
-    end
-  end
-
   describe '.constantize' do
     context 'with valid input' do
       {
