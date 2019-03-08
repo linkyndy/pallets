@@ -24,9 +24,6 @@ module Pallets
     # per task basis
     attr_accessor :max_failures
 
-    # Namespace used by the backend to store information
-    attr_accessor :namespace
-
     # Number of connections to the backend
     attr_accessor :pool_size
 
@@ -41,7 +38,6 @@ module Pallets
       @failed_job_lifespan = 7_776_000 # 3 months
       @job_timeout = 1_800 # 30 minutes
       @max_failures = 3
-      @namespace = 'pallets'
       @pool_size = 5
       @serializer = :json
     end

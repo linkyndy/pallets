@@ -11,7 +11,6 @@ describe Pallets::CLI do
       concurrency: 2,
       job_timeout: 1800, # 30 minutes
       max_failures: 3,
-      namespace: 'pallets',
       pool_size: 5,
       serializer: :json
     )
@@ -66,17 +65,6 @@ describe Pallets::CLI do
     it 'sets the failed job lifespan' do
       subject
       expect(configuration).to have_received(:failed_job_lifespan=).with(123)
-    end
-  end
-
-  context 'with --namespace provided' do
-    before do
-      stub_const('ARGV', ['--namespace=foo'])
-    end
-
-    it 'sets the given namespace' do
-      subject
-      expect(configuration).to have_received(:namespace=).with('foo')
     end
   end
 

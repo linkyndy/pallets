@@ -3,21 +3,20 @@ require 'redis'
 module Pallets
   module Backends
     class Redis < Base
-      def initialize(namespace:, blocking_timeout:, failed_job_lifespan:, job_timeout:, pool_size:, **options)
-        @namespace = namespace
+      def initialize(blocking_timeout:, failed_job_lifespan:, job_timeout:, pool_size:, **options)
         @blocking_timeout = blocking_timeout
         @failed_job_lifespan = failed_job_lifespan
         @job_timeout = job_timeout
         @pool = Pallets::Pool.new(pool_size) { ::Redis.new(options) }
 
-        @queue_key = "#{namespace}:queue"
-        @reliability_queue_key = "#{namespace}:reliability-queue"
-        @reliability_set_key = "#{namespace}:reliability-set"
-        @retry_set_key = "#{namespace}:retry-set"
-        @given_up_set_key = "#{namespace}:given-up-set"
-        @workflow_key = "#{namespace}:workflows:%s"
-        @context_key = "#{namespace}:contexts:%s"
-        @eta_key = "#{namespace}:etas:%s"
+        @queue_key = "queue"
+        @reliability_queue_key = "reliability-queue"
+        @reliability_set_key = "reliability-set"
+        @retry_set_key = "retry-set"
+        @given_up_set_key = "given-up-set"
+        @workflow_key = "workflows:%s"
+        @context_key = "contexts:%s"
+        @eta_key = "etas:%s"
 
         register_scripts
       end
