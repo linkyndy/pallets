@@ -11,10 +11,10 @@ Toy workflow engine, written in Ruby
 require 'pallets'
 
 class MyWorkflow < Pallets::Workflow
-  task 'Foo'
-  task 'Bar' => 'Foo'
-  task 'Baz' => 'Foo'
-  task 'Qux' => ['Bar', 'Baz']
+  task Foo
+  task Bar => Foo
+  task Baz => Foo
+  task Qux => [Bar, Baz]
 end
 
 class Foo < Pallets::Task
