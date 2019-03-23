@@ -19,11 +19,7 @@ module Pallets
     end
 
     def id
-      @id ||= begin
-        initials = self.class.name.gsub(/[^A-Z]+([A-Z])/, '\1')[0,3]
-        random = SecureRandom.hex(5)
-        "P#{initials}#{random}".upcase
-      end
+      @id ||= "P#{Pallets::Util.generate_id(self.class.name)}".upcase
     end
 
     private
