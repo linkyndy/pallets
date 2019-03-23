@@ -375,7 +375,6 @@ describe Pallets::Worker do
     context 'with the number of failures exceeding the threshold' do
       let(:job_hash) do
         {
-          'context' => { bar: :baz },
           'wfid' => 'qux',
           'jid' => 'quxqux',
           'task_class' => 'Foo',

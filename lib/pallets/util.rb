@@ -2,6 +2,12 @@ module Pallets
   module Util
     extend self
 
+    def generate_id(str)
+      initials = str.gsub(/[^A-Z]+([A-Z])/, '\1')[0,3]
+      random = SecureRandom.hex(5)
+      "#{initials}#{random}"
+    end
+
     def constantize(str)
       names = str.split('::')
 
