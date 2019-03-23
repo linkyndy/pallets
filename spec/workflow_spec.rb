@@ -62,6 +62,7 @@ describe Pallets::Workflow do
         %w(Foo Bar Baz Qux).each do |task_class|
           expect(serializer).to have_received(:dump).with({
             'wfid' => a_kind_of(String),
+            'jid' => a_kind_of(String),
             'workflow_class' => 'TestWorkflow',
             'created_at' => Time.now.to_f,
             'task_class' => task_class,
