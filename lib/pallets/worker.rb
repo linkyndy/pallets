@@ -128,7 +128,6 @@ module Pallets
       {
         wid:  id,
         wfid: job_hash['wfid'],
-        jid:  job_hash['jid'],
         wf:   job_hash['workflow_class'],
         tsk:  job_hash['task_class']
       }
