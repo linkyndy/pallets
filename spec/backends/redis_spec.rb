@@ -67,7 +67,7 @@ describe Pallets::Backends::Redis do
   describe '#get_context' do
     before do
       # Set up context
-      redis.hmset('contexts:baz', ['foo', 'bar', 'baz', 'qux'])
+      redis.hmset('context:baz', ['foo', 'bar', 'baz', 'qux'])
     end
 
     it 'retrieves the context' do
@@ -82,7 +82,7 @@ describe Pallets::Backends::Redis do
       redis.zadd('reliability-set', 123, 'foo')
 
       # Set up context
-      redis.hset('contexts:baz', 'foo', 'bar')
+      redis.hset('context:baz', 'foo', 'bar')
     end
 
     it 'removes the job from the reliability queue' do
@@ -98,29 +98,29 @@ describe Pallets::Backends::Redis do
     context 'with a non-empty context buffer' do
       it 'adds the context buffer to the context' do
         subject.save('baz', 'foo', 'baz' => 'qux')
-        expect(redis.hgetall('contexts:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
+        expect(redis.hgetall('context:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
       end
     end
 
     context 'with an empty context buffer' do
       it 'does not touch the context' do
         subject.save('baz', 'foo', {})
-        expect(redis.hgetall('contexts:baz')).to eq('foo' => 'bar')
+        expect(redis.hgetall('context:baz')).to eq('foo' => 'bar')
       end
     end
 
     context 'with more jobs to queue' do
       before do
-        # Set up jobs sorted set
-        redis.zadd('workflows:baz', [[1, 'bar'], [2, 'baz'], [5, 'qux']])
+        # Set up workflow queue
+        redis.zadd('workflow-queue:baz', [[1, 'bar'], [2, 'baz'], [5, 'qux']])
 
-        # Set up ETA
-        redis.set('etas:baz', 3)
+        # Set up remaining key
+        redis.set('remaining:baz', 3)
       end
 
-      it 'decrements and removes jobs with 0 from workflow set' do
+      it 'decrements and removes jobs with 0 from workflow queue' do
         subject.save('baz', 'foo', 'baz' => 'qux')
-        expect(redis.zrange('workflows:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 4]])
+        expect(redis.zrange('workflow-queue:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 4]])
       end
 
       it 'queues jobs that are ready to be processed' do
@@ -128,26 +128,26 @@ describe Pallets::Backends::Redis do
         expect(redis.lrange('queue', 0, -1)).to eq(['bar'])
       end
 
-      it 'decrements the ETA' do
+      it 'decrements the remaining key' do
         subject.save('baz', 'foo', 'baz' => 'qux')
-        expect(redis.get('etas:baz')).to eq('2')
+        expect(redis.get('remaining:baz')).to eq('2')
       end
     end
 
     context 'with no more jobs to queue' do
       before do
-        # Set up ETA
-        redis.set('etas:baz', 1)
+        # Set up remaining key
+        redis.set('remaining:baz', 1)
       end
 
       it 'clears the context' do
         subject.save('baz', 'foo', 'baz' => 'qux')
-        expect(redis.exists('contexts:baz')).to be(false)
+        expect(redis.exists('context:baz')).to be(false)
       end
 
-      it 'clears the ETA' do
+      it 'clears the remaining key' do
         subject.save('baz', 'foo', 'baz' => 'qux')
-        expect(redis.exists('etas:baz')).to be(false)
+        expect(redis.exists('remaining:baz')).to be(false)
       end
     end
   end
@@ -247,14 +247,14 @@ describe Pallets::Backends::Redis do
   end
 
   describe '#run_workflow' do
-    it 'sets the ETA' do
+    it 'sets the remaining key' do
       subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
-      expect(redis.get('etas:baz')).to eq('2')
+      expect(redis.get('remaining:baz')).to eq('2')
     end
 
-    it 'adds pending jobs to workflow set' do
+    it 'adds pending jobs to workflow queue' do
       subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
-      expect(redis.zrange('workflows:baz', 0, -1, with_scores: true)).to eq([['bar', 1]])
+      expect(redis.zrange('workflow-queue:baz', 0, -1, with_scores: true)).to eq([['bar', 1]])
     end
 
     it 'queues jobs that are ready to be processed' do
@@ -265,14 +265,14 @@ describe Pallets::Backends::Redis do
     context 'with a non-empty context' do
       it 'sets the context' do
         subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
-        expect(redis.hgetall('contexts:baz')).to eq('foo' => 'bar')
+        expect(redis.hgetall('context:baz')).to eq('foo' => 'bar')
       end
     end
 
     context 'with an empty context' do
       it 'does not set the context' do
         subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], {})
-        expect(redis.exists('contexts:baz')).to be(false)
+        expect(redis.exists('context:baz')).to be(false)
       end
     end
   end

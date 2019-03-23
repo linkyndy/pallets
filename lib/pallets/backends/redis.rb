@@ -8,9 +8,9 @@ module Pallets
       RELIABILITY_SET_KEY = 'reliability-set'
       RETRY_SET_KEY = 'retry-set'
       GIVEN_UP_SET_KEY = 'given-up-set'
-      WORKFLOW_KEY = 'workflows:%s'
-      CONTEXT_KEY = 'contexts:%s'
-      ETA_KEY = 'etas:%s'
+      WORKFLOW_QUEUE_KEY = 'workflow-queue:%s'
+      CONTEXT_KEY = 'context:%s'
+      REMAINING_KEY = 'remaining:%s'
 
       def initialize(blocking_timeout:, failed_job_lifespan:, job_timeout:, pool_size:, **options)
         @blocking_timeout = blocking_timeout
@@ -35,17 +35,17 @@ module Pallets
         end
       end
 
-      def get_context(workflow_id)
+      def get_context(wfid)
         @pool.execute do |client|
-          client.hgetall(CONTEXT_KEY % workflow_id)
+          client.hgetall(CONTEXT_KEY % wfid)
         end
       end
 
-      def save(workflow_id, job, context_buffer)
+      def save(wfid, job, context_buffer)
         @pool.execute do |client|
           client.eval(
             @scripts['save'],
-            [WORKFLOW_KEY % workflow_id, QUEUE_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY, CONTEXT_KEY % workflow_id, ETA_KEY % workflow_id],
+            [WORKFLOW_QUEUE_KEY % wfid, QUEUE_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY, CONTEXT_KEY % wfid, REMAINING_KEY % wfid],
             context_buffer.to_a << job
           )
         end
@@ -81,15 +81,15 @@ module Pallets
         end
       end
 
-      def run_workflow(workflow_id, jobs_with_order, context_buffer)
+      def run_workflow(wfid, jobs_with_order, context_buffer)
         @pool.execute do |client|
           client.multi do
             client.eval(
               @scripts['run_workflow'],
-              [WORKFLOW_KEY % workflow_id, QUEUE_KEY, ETA_KEY % workflow_id],
+              [WORKFLOW_QUEUE_KEY % wfid, QUEUE_KEY, REMAINING_KEY % wfid],
               jobs_with_order
             )
-            client.hmset(CONTEXT_KEY % workflow_id, *context_buffer.to_a) unless context_buffer.empty?
+            client.hmset(CONTEXT_KEY % wfid, *context_buffer.to_a) unless context_buffer.empty?
           end
         end
       end
