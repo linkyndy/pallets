@@ -105,7 +105,7 @@ module Pallets
         retry_at = Time.now.to_f + backoff_in_seconds(failures)
         backend.retry(new_job, job, retry_at)
       else
-        backend.give_up(new_job, job)
+        backend.give_up(new_job, job, job_hash['workflow_id'])
         Pallets.logger.info "Gave up after #{failures} failed attempts", extract_metadata(job_hash)
       end
     end
@@ -115,7 +115,7 @@ module Pallets
         'given_up_at' => Time.now.to_f,
         'reason' => 'returned_false'
       ))
-      backend.give_up(new_job, job)
+      backend.give_up(new_job, job, job_hash['workflow_id'])
       Pallets.logger.info "Gave up after returning false", extract_metadata(job_hash)
     end
 

@@ -387,7 +387,7 @@ describe Pallets::Worker do
       it 'tells the backend to give up the job' do
         Timecop.freeze do
           subject.send(:handle_job_error, ex, job, job_hash)
-          expect(backend).to have_received(:give_up).with('foobar', job)
+          expect(backend).to have_received(:give_up).with('foobar', job, 'qux')
         end
       end
     end
@@ -423,7 +423,7 @@ describe Pallets::Worker do
     it 'tells the backend to give up the job' do
       Timecop.freeze do
         subject.send(:handle_job_return_false, job, job_hash)
-        expect(backend).to have_received(:give_up).with('foobar', job)
+        expect(backend).to have_received(:give_up).with('foobar', job, 'qux')
       end
     end
   end

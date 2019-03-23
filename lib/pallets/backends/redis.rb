@@ -62,12 +62,15 @@ module Pallets
         end
       end
 
-      def give_up(job, old_job)
+      def give_up(job, old_job, workflow_id = nil)
+        keys = [@given_up_set_key, @reliability_queue_key, @reliability_set_key]
+        keys += [@workflow_key % workflow_id, @context_key % workflow_id, @eta_key % workflow_id] if workflow_id
+
         @pool.execute do |client|
           client.eval(
             @scripts['give_up'],
-            [@given_up_set_key, @reliability_queue_key, @reliability_set_key],
-            [Time.now.to_f, job, old_job, Time.now.to_f - @failed_job_lifespan]
+            keys,
+            [Time.now.to_f + @failed_job_lifespan, job, old_job, Time.now.to_f - @failed_job_lifespan, Time.now.to_i + @failed_job_lifespan]
           )
         end
       end

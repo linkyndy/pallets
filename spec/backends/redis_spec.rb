@@ -180,25 +180,45 @@ describe Pallets::Backends::Redis do
 
   describe '#give_up' do
     before do
+      # Set up jobs sorted set and context
+      redis.zadd('test:workflows:baz', 123, 'bar')
+      redis.hset('test:contexts:baz', 'qux', 'qux')
+
       # Set up reliability components
       redis.lpush('test:reliability-queue', 'foo')
       redis.zadd('test:reliability-set', 123, 'foo')
     end
 
     it 'removes the job from the reliability queue' do
-      subject.give_up('foonew', 'foo')
+      subject.give_up('foonew', 'foo', 'baz')
       expect(redis.lrange('test:reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.give_up('foonew', 'foo')
+      subject.give_up('foonew', 'foo', 'baz')
       expect(redis.zrange('test:reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     it 'adds the new job to the given up set' do
       Timecop.freeze do
-        subject.give_up('foonew', 'foo')
-        expect(redis.zrange('test:given-up-set', 0, -1, with_scores: true)).to eq([['foonew', Time.now.to_f]])
+        subject.give_up('foonew', 'foo', 'baz')
+        expect(redis.zrange('test:given-up-set', 0, -1, with_scores: true)).to eq([['foonew', Time.now.to_f + 100]])
+      end
+    end
+
+    it 'schedules the expiration of the related workflow queue' do
+      Timecop.freeze do
+        expect do
+          subject.give_up('foonew', 'foo', 'baz')
+        end.to change { redis.ttl('test:workflows:baz') }.from(-1).to(a_value_within(1).of(100))
+      end
+    end
+
+    it 'schedules the expiration of the related context' do
+      Timecop.freeze do
+        expect do
+          subject.give_up('foonew', 'foo', 'baz')
+        end.to change { redis.ttl('test:contexts:baz') }.from(-1).to(a_value_within(1).of(100))
       end
     end
 
@@ -209,7 +229,7 @@ describe Pallets::Backends::Redis do
 
       it 'removes the given up job from the given up set' do
         Timecop.freeze do
-          subject.give_up('foonew', 'foo')
+          subject.give_up('foonew', 'foo', 'baz')
           expect(redis.zrange('test:given-up-set', 0, -1)).not_to include('bar')
         end
       end
