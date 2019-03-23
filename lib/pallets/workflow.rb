@@ -29,17 +29,17 @@ module Pallets
     private
 
     def jobs_with_order
-      self.class.graph.sorted_with_order.map do |task_name, order|
-        job = serializer.dump(job_hash.merge(self.class.task_config[task_name]))
+      self.class.graph.sorted_with_order.map do |task_class, order|
+        job = serializer.dump(job_hash.merge(self.class.task_config[task_class]))
         [order, job]
       end
     end
 
     def job_hash
       {
-        'workflow_id'         => id,
-        'workflow_class_name' => self.class.name,
-        'created_at'          => Time.now.to_f
+        'wfid'           => id,
+        'workflow_class' => self.class.name,
+        'created_at'     => Time.now.to_f
       }
     end
 

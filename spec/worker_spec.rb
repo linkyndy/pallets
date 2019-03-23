@@ -173,8 +173,9 @@ describe Pallets::Worker do
     let(:job) { double }
     let(:job_hash) do
       {
-        'workflow_id' => 'qux',
-        'class_name' => 'Foo',
+        'wfid' => 'qux',
+        'jid' => 'quxqux',
+        'task_class' => 'Foo',
       }
     end
     let(:context_class) { class_double('Pallets::Context').as_stubbed_const }
@@ -304,8 +305,9 @@ describe Pallets::Worker do
     let(:job) { double }
     let(:job_hash) do
       {
-        'workflow_id' => 'qux',
-        'class_name' => 'Foo',
+        'wfid' => 'qux',
+        'jid' => 'quxqux',
+        'task_class' => 'Foo',
         'max_failures' => 15
       }
     end
@@ -334,8 +336,9 @@ describe Pallets::Worker do
       let(:job_hash) do
         {
           'context' => { bar: :baz },
-          'workflow_id' => 'qux',
-          'class_name' => 'Foo',
+          'wfid' => 'qux',
+          'jid' => 'quxqux',
+          'task_class' => 'Foo',
           'max_failures' => 15,
           'failures' => 1,
           'given_up_at' => Time.now.to_f,
@@ -372,9 +375,10 @@ describe Pallets::Worker do
     context 'with the number of failures exceeding the threshold' do
       let(:job_hash) do
         {
-          'workflow_id' => 'qux',
           'context' => { bar: :baz },
-          'class_name' => 'Foo',
+          'wfid' => 'qux',
+          'jid' => 'quxqux',
+          'task_class' => 'Foo',
           'max_failures' => 15,
           'failures' => 15,
           'given_up_at' => Time.now.to_f,
@@ -399,8 +403,9 @@ describe Pallets::Worker do
     let(:job) { double }
     let(:job_hash) do
       {
-        'workflow_id' => 'qux',
-        'class_name' => 'Foo',
+        'wfid' => 'qux',
+        'jid' => 'quxqux',
+        'task_class' => 'Foo',
         'max_failures' => 15
       }
     end
@@ -434,7 +439,7 @@ describe Pallets::Worker do
     let(:job) { double }
     let(:job_hash) do
       {
-        'workflow_id' => 'qux'
+        'wfid' => 'qux'
       }
     end
     let(:context) { instance_spy('Pallets::Context', buffer: { foo: :bar }) }
