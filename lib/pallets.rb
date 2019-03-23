@@ -34,7 +34,6 @@ module Pallets
     @backend ||= begin
       cls = Pallets::Util.constantize("Pallets::Backends::#{configuration.backend.capitalize}")
       cls.new(
-        namespace: configuration.namespace,
         blocking_timeout: configuration.blocking_timeout,
         failed_job_lifespan: configuration.failed_job_lifespan,
         job_timeout: configuration.job_timeout,
