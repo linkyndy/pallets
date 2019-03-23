@@ -72,10 +72,10 @@ module Pallets
       Pallets.logger.info "Started", extract_metadata(job_hash)
 
       context = Context[
-        serializer.load_context(backend.get_context(job_hash['workflow_id']))
+        serializer.load_context(backend.get_context(job_hash['wfid']))
       ]
 
-      task_class = Pallets::Util.constantize(job_hash["class_name"])
+      task_class = Pallets::Util.constantize(job_hash["task_class"])
       task = task_class.new(context)
       begin
         task_result = task.run
@@ -120,16 +120,16 @@ module Pallets
     end
 
     def handle_job_success(context, job, job_hash)
-      backend.save(job_hash['workflow_id'], job, serializer.dump_context(context.buffer))
+      backend.save(job_hash['wfid'], job, serializer.dump_context(context.buffer))
       Pallets.logger.info "Done", extract_metadata(job_hash)
     end
 
     def extract_metadata(job_hash)
       {
         wid:  id,
-        wfid: job_hash['workflow_id'],
-        wf:   job_hash['workflow_class_name'],
-        tsk:  job_hash['class_name']
+        wfid: job_hash['wfid'],
+        wf:   job_hash['workflow_class'],
+        tsk:  job_hash['task_class']
       }
     end
 

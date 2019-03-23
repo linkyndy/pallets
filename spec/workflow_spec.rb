@@ -59,12 +59,12 @@ describe Pallets::Workflow do
     it 'builds a job for each task and uses the serializer to dump it' do
       Timecop.freeze do
         subject.run
-        %w(Foo Bar Baz Qux).each do |task_class_name|
+        %w(Foo Bar Baz Qux).each do |task_class|
           expect(serializer).to have_received(:dump).with({
-            'workflow_id' => a_kind_of(String),
-            'workflow_class_name' => 'TestWorkflow',
+            'wfid' => a_kind_of(String),
+            'workflow_class' => 'TestWorkflow',
             'created_at' => Time.now.to_f,
-            'class_name' => task_class_name,
+            'task_class' => task_class,
             'max_failures' => 3
           })
         end

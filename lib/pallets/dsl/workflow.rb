@@ -11,12 +11,12 @@ module Pallets
           [arg, depends_on]
         end
 
-        class_name = klass.to_s
+        task_class = klass.to_s
         dependencies = Array(dependencies).compact.uniq.map(&:to_s)
-        graph.add(class_name, dependencies)
+        graph.add(task_class, dependencies)
 
-        task_config[class_name] = {
-          'class_name' => class_name,
+        task_config[task_class] = {
+          'task_class' => task_class,
           'max_failures' => max_failures || Pallets.configuration.max_failures
         }
 

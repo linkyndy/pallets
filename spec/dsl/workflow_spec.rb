@@ -102,7 +102,7 @@ describe Pallets::DSL::Workflow do
     it 'configures the task with the class name' do
       subject.class_eval { task 'Pay' }
       expect(subject.task_config).to match(
-        'Pay' => a_hash_including('class_name' => 'Pay')
+        'Pay' => a_hash_including('task_class' => 'Pay')
       )
     end
 

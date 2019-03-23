@@ -65,10 +65,6 @@ module Pallets
           Pallets.configuration.failed_job_lifespan = failed_job_lifespan
         end
 
-        opts.on('-n', '--namespace NAME', 'Namespace to use for backend') do |namespace|
-          Pallets.configuration.namespace = namespace
-        end
-
         opts.on('-p', '--pool-size NUM', Integer, 'Size of backend pool') do |pool_size|
           Pallets.configuration.pool_size = pool_size
         end
