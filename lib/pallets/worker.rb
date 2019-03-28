@@ -135,7 +135,7 @@ module Pallets
     end
 
     def backoff_in_seconds(count)
-      count ** 4 + 6
+      count ** 4 + rand(6, 10)
     end
 
     def backend
