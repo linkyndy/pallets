@@ -62,8 +62,8 @@ describe Pallets::Graph do
         end
       end
 
-      it 'raises a KeyError' do
-        expect { graph.sorted_with_order }.to raise_error(KeyError)
+      it 'raises a WorkflowError' do
+        expect { graph.sorted_with_order }.to raise_error(Pallets::WorkflowError)
       end
     end
   end
