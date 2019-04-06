@@ -25,7 +25,7 @@ module Pallets
     attr_accessor :max_failures
 
     # Number of connections to the backend
-    attr_accessor :pool_size
+    attr_writer :pool_size
 
     # Serializer used for jobs
     attr_accessor :serializer
@@ -38,8 +38,11 @@ module Pallets
       @failed_job_lifespan = 7_776_000 # 3 months
       @job_timeout = 1_800 # 30 minutes
       @max_failures = 3
-      @pool_size = 5
       @serializer = :json
+    end
+
+    def pool_size
+      @pool_size || @concurrency + 1
     end
   end
 end
