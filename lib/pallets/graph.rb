@@ -43,6 +43,8 @@ module Pallets
 
     def tsort_each_child(node, &block)
       @nodes.fetch(node).each(&block)
+    rescue KeyError
+      raise WorkflowError, "Task #{node} is marked as a dependency but not defined"
     end
   end
 end

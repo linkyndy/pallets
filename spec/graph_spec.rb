@@ -3,20 +3,20 @@ require 'spec_helper'
 describe Pallets::Graph do
   describe '#parents' do
     before do
-      subject.add(:foo, [])
-      subject.add(:bar, [:foo])
-      subject.add(:baz, [:foo])
+      subject.add('Foo', [])
+      subject.add('Bar', ['Foo'])
+      subject.add('Baz', ['Foo'])
     end
 
     context 'for root node' do
       it 'returns an empty Array' do
-        expect(subject.parents(:foo)).to be_an(Array).and be_empty
+        expect(subject.parents('Foo')).to be_an(Array).and be_empty
       end
     end
 
     context 'for regular node' do
       it 'returns an Array of parent nodes' do
-        expect(subject.parents(:bar)).to be_an(Array).and contain_exactly(:foo)
+        expect(subject.parents('Bar')).to be_an(Array).and contain_exactly('Foo')
       end
     end
   end
@@ -30,7 +30,7 @@ describe Pallets::Graph do
 
     context 'with nodes added' do
       before do
-        subject.add(:foo, [])
+        subject.add('Foo', [])
       end
 
       it 'returns false' do
@@ -42,28 +42,28 @@ describe Pallets::Graph do
   describe '#sorted_with_order' do
     let(:graph) do
       Pallets::Graph.new.tap do |g|
-        g.add(:foo, [])
-        g.add(:bar, [:foo])
-        g.add(:baz, [:foo])
-        g.add(:qux, [:bar])
+        g.add('Foo', [])
+        g.add('Bar', ['Foo'])
+        g.add('Baz', ['Foo'])
+        g.add('Qux', ['Bar'])
       end
     end
 
     it 'returns a properly formatted Array' do
       expect(graph.sorted_with_order).to eq([
-        [:foo, 0], [:bar, 1], [:baz, 1], [:qux, 3]
+        ['Foo', 0], ['Bar', 1], ['Baz', 1], ['Qux', 3]
       ])
     end
 
     context 'with a dependency that is not defined' do
       let(:graph) do
         Pallets::Graph.new.tap do |g|
-          g.add(:foo, [:bar])
+          g.add('Foo', ['Bar'])
         end
       end
 
-      it 'raises a KeyError' do
-        expect { graph.sorted_with_order }.to raise_error(KeyError)
+      it 'raises a WorkflowError' do
+        expect { graph.sorted_with_order }.to raise_error(Pallets::WorkflowError)
       end
     end
   end
