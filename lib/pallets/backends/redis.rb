@@ -43,7 +43,7 @@ module Pallets
 
       def save(wfid, job, context_buffer)
         @pool.execute do |client|
-          client.eval(
+          client.evalsha(
             @scripts['save'],
             [WORKFLOW_QUEUE_KEY % wfid, QUEUE_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY, CONTEXT_KEY % wfid, REMAINING_KEY % wfid],
             context_buffer.to_a << job
@@ -53,7 +53,7 @@ module Pallets
 
       def retry(job, old_job, at)
         @pool.execute do |client|
-          client.eval(
+          client.evalsha(
             @scripts['retry'],
             [RETRY_SET_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY],
             [at, job, old_job]
@@ -63,7 +63,7 @@ module Pallets
 
       def give_up(job, old_job)
         @pool.execute do |client|
-          client.eval(
+          client.evalsha(
             @scripts['give_up'],
             [GIVEN_UP_SET_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY],
             [Time.now.to_f, job, old_job, Time.now.to_f - @failed_job_lifespan]
@@ -73,7 +73,7 @@ module Pallets
 
       def reschedule_all(earlier_than)
         @pool.execute do |client|
-          client.eval(
+          client.evalsha(
             @scripts['reschedule_all'],
             [RELIABILITY_SET_KEY, RELIABILITY_QUEUE_KEY, RETRY_SET_KEY, QUEUE_KEY],
             [earlier_than]
@@ -84,7 +84,7 @@ module Pallets
       def run_workflow(wfid, jobs_with_order, context_buffer)
         @pool.execute do |client|
           client.multi do
-            client.eval(
+            client.evalsha(
               @scripts['run_workflow'],
               [WORKFLOW_QUEUE_KEY % wfid, QUEUE_KEY, REMAINING_KEY % wfid],
               jobs_with_order
@@ -97,11 +97,14 @@ module Pallets
       private
 
       def register_scripts
-        @scripts ||= Dir["#{__dir__}/scripts/*.lua"].map do |file|
-          name = File.basename(file, '.lua')
-          script = File.read(file)
-          [name, script]
-        end.to_h
+        @scripts ||= @pool.execute do |client|
+          Dir["#{__dir__}/scripts/*.lua"].map do |file|
+            name = File.basename(file, '.lua')
+            script = File.read(file)
+            sha = client.script(:load, script)
+            [name, sha]
+          end.to_h
+        end
       end
     end
   end
