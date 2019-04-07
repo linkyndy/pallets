@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2019-04-07
+### Added
+- give up workflow before it finishes by returning `false` in any of its tasks (#25)
+- jobs have a JID (#30)
+- Rails support (#27)
+
+### Changed
+- contexts are serialized and accept basic Ruby types as values (#24)
+- workflow tasks are defined using classes (#26)
+- some job and Redis keys have been renamed (#28)
+- job retry backoff has a random component (#32)
+- missing dependencies raise a `WorkflowError` (#31)
+- Redis backend uses `EVALSHA` for Lua scripts (#34)
+- the `pool_size` configuration is inferred from `concurrency` (#33)
+
+### Removed
+- backend namespaces (#28)
+
 ## [0.3.0] - 2019-02-08
 ### Added
 - shared contexts (#9)
