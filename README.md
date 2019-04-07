@@ -38,6 +38,7 @@ That's basically it! Curious for more? Read on or [check the examples](examples/
 * retries failed tasks
 * Redis backend out of the box
 * JSON and msgpack serializers out of the box
+* Rails support
 * beautiful DSL
 * convention over configuration
 * thoroughly tested
