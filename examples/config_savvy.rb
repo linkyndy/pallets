@@ -1,5 +1,12 @@
 require 'pallets'
 
+class AnnounceProcessing
+  def self.call(worker, job_hash, context)
+    puts "Starting to process job..."
+    yield
+  end
+end
+
 Pallets.configure do |c|
   # Harness 4 Pallets workers per process
   c.concurrency = 4
@@ -23,6 +30,10 @@ Pallets.configure do |c|
   # Jobs will be retried up to 5 times upon failure. After that, they will be
   # given up. Retry times are exponential and happen after: 7, 22, 87, 262, ...
   c.max_failures = 5
+
+  # Job execution can be wrapped with middleware to provide custom logic.
+  # Anything that responds to `call` would do
+  c.middleware << AnnounceProcessing
 end
 
 class ConfigSavvy < Pallets::Workflow
