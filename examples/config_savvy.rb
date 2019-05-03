@@ -1,7 +1,7 @@
 require 'pallets'
 
 class AnnounceProcessing
-  def self.call(worker, job_hash, context)
+  def self.call(worker, job, context)
     puts "Starting to process job..."
     yield
   end

@@ -36,7 +36,7 @@ module Pallets
     # the context
     #
     # A minimal example of a middleware is:
-    #   ->(worker, job_hash, context, &b) { puts 'Hello World!'; b.call }
+    #   ->(worker, job, context, &b) { puts 'Hello World!'; b.call }
     attr_reader :middleware
 
     def initialize
