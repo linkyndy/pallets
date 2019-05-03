@@ -170,6 +170,7 @@ describe Pallets::Worker do
   describe '#process' do
     let(:backend) { instance_spy('Pallets::Backends::Base') }
     let(:serializer) { instance_spy('Pallets::Serializers::Base') }
+    let(:middleware) { instance_spy('Pallets::Middleware::Stack') }
     let(:job) { double }
     let(:job_hash) do
       {
@@ -191,11 +192,14 @@ describe Pallets::Worker do
     before do
       allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:serializer).and_return(serializer)
+      allow(subject).to receive(:middleware).and_return(middleware)
       allow(context_class).to receive(:[]).and_return(context)
       allow(task_class).to receive(:new).and_return(task)
       allow(backend).to receive(:get_context).and_return(foo: :bar)
       allow(serializer).to receive(:load).and_return(job_hash)
       allow(serializer).to receive(:load_context).and_return(baz: :qux)
+      # Stub middleware invocation, but call the provided block
+      allow(middleware).to receive(:invoke) { |&block| block.call }
       allow(subject).to receive(:handle_job_error)
       allow(subject).to receive(:handle_job_return_false)
       allow(subject).to receive(:handle_job_success)
@@ -262,9 +266,11 @@ describe Pallets::Worker do
       expect(task_class).to have_received(:new).with(context)
     end
 
-    it 'runs the task' do
+    it 'runs the task wrapped by middleware' do
       subject.send(:process, job)
-      expect(task).to have_received(:run)
+      expect(middleware).to have_received(:invoke).with(subject, job_hash, context) do
+        expect(task).to have_received(:run)
+      end
     end
 
     context 'when an unexpected error occurs while running the task' do

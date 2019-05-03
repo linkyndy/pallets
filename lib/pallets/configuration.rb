@@ -30,6 +30,15 @@ module Pallets
     # Serializer used for jobs
     attr_accessor :serializer
 
+    # Middleware used to wrap job execution with custom logic. Acts like a stack
+    # and accepts callable objects (lambdas, procs, objects that respond to call)
+    # that take three arguments: the worker handling the job, the job hash and
+    # the context
+    #
+    # A minimal example of a middleware is:
+    #   ->(worker, job, context, &b) { puts 'Hello World!'; b.call }
+    attr_reader :middleware
+
     def initialize
       @backend = :redis
       @backend_args = {}
@@ -39,10 +48,16 @@ module Pallets
       @job_timeout = 1_800 # 30 minutes
       @max_failures = 3
       @serializer = :json
+      @middleware = default_middleware
     end
 
     def pool_size
       @pool_size || @concurrency + 1
+    end
+
+    def default_middleware
+      Middleware::Stack[
+      ]
     end
   end
 end

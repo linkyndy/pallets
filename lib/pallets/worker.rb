@@ -78,7 +78,9 @@ module Pallets
       task_class = Pallets::Util.constantize(job_hash["task_class"])
       task = task_class.new(context)
       begin
-        task_result = task.run
+        task_result = middleware.invoke(self, job_hash, context) do
+          task.run
+        end
       rescue => ex
         handle_job_error(ex, job, job_hash)
       else
@@ -144,6 +146,10 @@ module Pallets
 
     def serializer
       @serializer ||= Pallets.serializer
+    end
+
+    def middleware
+      @middleware ||= Pallets.middleware
     end
   end
 end

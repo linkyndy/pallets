@@ -9,6 +9,7 @@ require 'pallets/errors'
 require 'pallets/graph'
 require 'pallets/logger'
 require 'pallets/manager'
+require 'pallets/middleware/stack'
 require 'pallets/pool'
 require 'pallets/scheduler'
 require 'pallets/serializers/base'
@@ -48,6 +49,10 @@ module Pallets
       cls = Pallets::Util.constantize("Pallets::Serializers::#{configuration.serializer.capitalize}")
       cls.new
     end
+  end
+
+  def self.middleware
+    @middleware ||= configuration.middleware
   end
 
   def self.logger

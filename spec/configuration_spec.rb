@@ -22,4 +22,10 @@ describe Pallets::Configuration do
       end
     end
   end
+
+  describe '#middleware' do
+    it 'is a Pallets::Middleware::Stack' do
+      expect(subject.middleware).to be_a(Pallets::Middleware::Stack)
+    end
+  end
 end
