@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'pry-byebug'
 
 describe Pallets::Middleware::Stack do
   it 'is an Array' do
