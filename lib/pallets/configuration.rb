@@ -57,6 +57,7 @@ module Pallets
 
     def default_middleware
       Middleware::Stack[
+        Middleware::JobLogger
       ]
     end
   end

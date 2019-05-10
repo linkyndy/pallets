@@ -69,8 +69,6 @@ module Pallets
         return
       end
 
-      Pallets.logger.info "Started", extract_metadata(job_hash)
-
       context = Context[
         serializer.load_context(backend.get_context(job_hash['wfid']))
       ]
@@ -93,8 +91,6 @@ module Pallets
     end
 
     def handle_job_error(ex, job, job_hash)
-      Pallets.logger.warn "#{ex.class.name}: #{ex.message}", extract_metadata(job_hash)
-      Pallets.logger.warn ex.backtrace.join("\n"), extract_metadata(job_hash) unless ex.backtrace.nil?
       failures = job_hash.fetch('failures', 0) + 1
       new_job = serializer.dump(job_hash.merge(
         'failures' => failures,
@@ -108,7 +104,6 @@ module Pallets
         backend.retry(new_job, job, retry_at)
       else
         backend.give_up(new_job, job)
-        Pallets.logger.info "Gave up after #{failures} failed attempts", extract_metadata(job_hash)
       end
     end
 
@@ -118,22 +113,10 @@ module Pallets
         'reason' => 'returned_false'
       ))
       backend.give_up(new_job, job)
-      Pallets.logger.info "Gave up after returning false", extract_metadata(job_hash)
     end
 
     def handle_job_success(context, job, job_hash)
       backend.save(job_hash['wfid'], job, serializer.dump_context(context.buffer))
-      Pallets.logger.info "Done", extract_metadata(job_hash)
-    end
-
-    def extract_metadata(job_hash)
-      {
-        wid:  id,
-        wfid: job_hash['wfid'],
-        jid: job_hash['jid'],
-        wf:   job_hash['workflow_class'],
-        tsk:  job_hash['task_class']
-      }
     end
 
     def backoff_in_seconds(count)
