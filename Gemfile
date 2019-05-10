@@ -3,6 +3,7 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'rake'
+gem 'appsignal'
 
 group :test do
   gem 'rspec'
