@@ -25,10 +25,11 @@ module Pallets
             transaction.params = filtered_context(context)
             formatted_metadata(job).each { |kv| transaction.set_metadata(*kv) }
             transaction.set_http_or_background_queue_start
-            Appsignal::Transaction.complete_current!
             Appsignal.increment_counter('pallets_job_count', 1, status: job_status || :successful)
           end
         end
+      ensure
+        Appsignal::Transaction.complete_current!
       end
 
       def self.filtered_context(context)
