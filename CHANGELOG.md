@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2019-06-01
+### Changed
+- fix transaction completeness in Appsignal instrumenter (#43)
+
 ## [0.5.0] - 2019-05-12
 ### Added
 - wrap job execution with middleware (#38)
@@ -56,7 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 0.1.0 - 2018-09-29
 - Pallets' inception <3
 
-[Unreleased]: https://github.com/linkyndy/pallets/compare/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/linkyndy/pallets/compare/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/linkyndy/pallets/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/linkyndy/pallets/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/linkyndy/pallets/compare/v0.3.0...v0.5.0
 [0.3.0]: https://github.com/linkyndy/pallets/compare/v0.2.0...v0.3.0
