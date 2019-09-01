@@ -1,17 +1,11 @@
 require 'spec_helper'
 
 describe Pallets::DSL::Workflow do
-  # Set the subject to class that extends the DSL
-  subject { Class.new { extend Pallets::DSL::Workflow } }
-
-  let(:task_config) { {} }
-  let(:graph) { instance_spy('Pallets::Graph') }
+  # Set the subject to workflow class that extends the DSL
+  subject { Class.new(Pallets::Workflow) { extend Pallets::DSL::Workflow } }
 
   before do
     allow(Pallets.configuration).to receive(:max_failures).and_return(3)
-    # Stub external calls so we can test the DSL in isolation
-    allow(subject).to receive(:task_config).and_return(task_config)
-    allow(subject).to receive(:graph).and_return(graph)
   end
 
   describe '#task' do
@@ -24,79 +18,65 @@ describe Pallets::DSL::Workflow do
     end
 
     context 'with a simple argument' do
-      it 'identifies the name as the argument' do
+      it 'identifies the name as the argument and no dependencies' do
+        expect(subject.graph).to receive(:add).with('Eat', [])
         subject.class_eval { task 'Eat' }
-        expect(graph).to have_received(:add).with('Eat', anything)
       end
 
-      it 'does not identify any dependencies' do
-        subject.class_eval { task 'Eat' }
-        expect(graph).to have_received(:add).with(anything, [])
       end
 
       it 'handles classes' do
         stub_const('Eat', Class.new)
+        expect(subject.graph).to receive(:add).with('Eat', [])
         subject.class_eval { task Eat }
-        expect(graph).to have_received(:add).with('Eat', anything)
       end
     end
 
     context 'with a simple argument and with :depends_on' do
-      it 'identifies the name as the argument' do
+      it 'identifies the name as the argument and dependencies from :depends_on' do
+        expect(subject.graph).to receive(:add).with('BuyFood', ['EarnMoney'])
         subject.class_eval { task 'BuyFood', depends_on: 'EarnMoney' }
-        expect(graph).to have_received(:add).with('BuyFood', anything)
       end
 
-      it 'identifies dependencies from :depends_on' do
-        subject.class_eval { task 'BuyFood', depends_on: 'EarnMoney' }
-        expect(graph).to have_received(:add).with(anything, ['EarnMoney'])
       end
 
       it 'handles classes' do
         stub_const('BuyFood', Class.new)
         stub_const('EarnMoney', Class.new)
+        expect(subject.graph).to receive(:add).with('BuyFood', ['EarnMoney'])
         subject.class_eval { task BuyFood, depends_on: EarnMoney }
-        expect(graph).to have_received(:add).with('BuyFood', ['EarnMoney'])
       end
 
       it 'handles multiple dependencies' do
+        expect(subject.graph).to receive(:add).with('BuyFood', ['EarnMoney', 'GoToShop'])
         subject.class_eval { task 'BuyFood', depends_on: ['EarnMoney', 'GoToShop'] }
-        expect(graph).to have_received(:add).with(anything, ['EarnMoney', 'GoToShop'])
       end
     end
 
     context 'with a hash argument' do
-      it 'identifies the name as the first key' do
+      it 'identifies the name as the first key and dependencies as the first value' do
+        expect(subject.graph).to receive(:add).with('Drink', ['GetThirstiness'])
         subject.class_eval { task 'Drink' => 'GetThirstiness' }
-        expect(graph).to have_received(:add).with('Drink', anything)
       end
 
-      it 'identifies dependencies as the first value' do
-        subject.class_eval { task 'Drink' => 'GetThirstiness' }
-        expect(graph).to have_received(:add).with(anything, ['GetThirstiness'])
       end
 
       it 'handles classes' do
         stub_const('Drink', Class.new)
         stub_const('GetThirstiness', Class.new)
+        expect(subject.graph).to receive(:add).with('Drink', ['GetThirstiness'])
         subject.class_eval { task Drink => GetThirstiness }
-        expect(graph).to have_received(:add).with('Drink', ['GetThirstiness'])
       end
 
       it 'handles multiple dependencies' do
+        expect(subject.graph).to receive(:add).with('Drink', ['GetThirstiness', 'BuyWater'])
         subject.class_eval { task 'Drink' => ['GetThirstiness', 'BuyWater'] }
-        expect(graph).to have_received(:add).with(anything, ['GetThirstiness', 'BuyWater'])
       end
 
       it 'discards dependencies from :depends_on' do
+        expect(subject.graph).to receive(:add).with('Drink', ['GetThirstiness'])
         subject.class_eval { task 'Drink' => 'GetThirstiness', depends_on: 'Hungry' }
-        expect(graph).to have_received(:add).with(anything, ['GetThirstiness'])
       end
-    end
-
-    it "adds a task to the workflow's graph" do
-      subject.class_eval { task 'One' }
-      expect(graph).to have_received(:add).with('One', a_kind_of(Array))
     end
 
     it 'configures the task with the class name' do
