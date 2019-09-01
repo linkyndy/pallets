@@ -9,6 +9,10 @@ module Pallets
     end
 
     def add(node, dependencies)
+      raise WorkflowError, "Task #{node} is already defined in this workflow. "\
+                           "Use `task '#{node}', as: 'FooBar'` to define an "\
+                           "alias and reuse task" if nodes.key?(node)
+
       nodes[node] = dependencies
     end
 
