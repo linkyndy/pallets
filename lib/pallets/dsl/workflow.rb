@@ -1,7 +1,7 @@
 module Pallets
   module DSL
     module Workflow
-      def task(arg, depends_on: nil, max_failures: nil, &block)
+      def task(arg, as: nil, depends_on: nil, max_failures: nil, &block)
         klass, dependencies = case arg
         when Hash
           # The `task Foo => Bar` notation
@@ -12,10 +12,12 @@ module Pallets
         end
 
         task_class = klass.to_s
-        dependencies = Array(dependencies).compact.uniq.map(&:to_s)
-        graph.add(task_class, dependencies)
+        as ||= task_class
 
-        task_config[task_class] = {
+        dependencies = Array(dependencies).compact.uniq.map(&:to_s)
+        graph.add(as, dependencies)
+
+        task_config[as] = {
           'task_class' => task_class,
           'max_failures' => max_failures || Pallets.configuration.max_failures
         }

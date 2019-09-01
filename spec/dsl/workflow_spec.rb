@@ -23,6 +23,11 @@ describe Pallets::DSL::Workflow do
         subject.class_eval { task 'Eat' }
       end
 
+      context 'and with :as' do
+        it 'identifies the name as :as and no dependencies' do
+          expect(subject.graph).to receive(:add).with('ActuallyEat', [])
+          subject.class_eval { task 'Eat', as: 'ActuallyEat' }
+        end
       end
 
       it 'handles classes' do
@@ -38,6 +43,11 @@ describe Pallets::DSL::Workflow do
         subject.class_eval { task 'BuyFood', depends_on: 'EarnMoney' }
       end
 
+      context 'and with :as' do
+        it 'identifies the name as :as and dependencies from :depends_on' do
+          expect(subject.graph).to receive(:add).with('ActuallyBuyFood', ['EarnMoney'])
+          subject.class_eval { task 'BuyFood', as: 'ActuallyBuyFood', depends_on: 'EarnMoney' }
+        end
       end
 
       it 'handles classes' do
@@ -59,6 +69,11 @@ describe Pallets::DSL::Workflow do
         subject.class_eval { task 'Drink' => 'GetThirstiness' }
       end
 
+      context 'and with :as' do
+        it 'identifies the name as :as and dependencies as the first value' do
+          expect(subject.graph).to receive(:add).with('ActuallyDrink', ['GetThirstiness'])
+          subject.class_eval { task 'Drink', as: 'ActuallyDrink', depends_on: 'GetThirstiness' }
+        end
       end
 
       it 'handles classes' do

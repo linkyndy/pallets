@@ -8,9 +8,9 @@ describe Pallets::Workflow do
 
   class TestWorkflow < Pallets::Workflow
     task 'Foo'
-    task 'Bar' => 'Foo'
+    task 'Bar', as: 'ActualBar', depends_on: 'Foo'
     task 'Baz' => 'Foo'
-    task 'Qux' => 'Bar'
+    task 'Qux' => 'ActualBar'
   end
 
   class EmptyWorkflow < Pallets::Workflow

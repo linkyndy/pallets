@@ -25,19 +25,19 @@ module Pallets
     private
 
     def jobs_with_order
-      self.class.graph.sorted_with_order.map do |task_class, order|
-        job = serializer.dump(construct_job(task_class))
+      self.class.graph.sorted_with_order.map do |task_alias, order|
+        job = serializer.dump(construct_job(task_alias))
         [order, job]
       end
     end
 
-    def construct_job(task_class)
-      {}.tap do |job|
+    def construct_job(task_alias)
+      Hash[self.class.task_config[task_alias]].tap do |job|
         job['wfid'] = id
-        job['jid'] = "J#{Pallets::Util.generate_id(task_class)}".upcase
         job['workflow_class'] = self.class.name
+        job['jid'] = "J#{Pallets::Util.generate_id(job['task_class'])}".upcase
         job['created_at'] = Time.now.to_f
-      end.merge(self.class.task_config[task_class])
+      end
     end
 
     def backend
