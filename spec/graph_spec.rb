@@ -1,6 +1,13 @@
 require 'spec_helper'
 
 describe Pallets::Graph do
+  describe '#add' do
+    it 'adds node and its dependencies' do
+      subject.add('Foo', ['Bar'])
+      expect(subject.send(:nodes)).to match('Foo' => ['Bar'])
+    end
+  end
+
   describe '#parents' do
     before do
       subject.add('Foo', [])

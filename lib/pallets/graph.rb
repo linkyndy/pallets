@@ -9,15 +9,15 @@ module Pallets
     end
 
     def add(node, dependencies)
-      @nodes[node] = dependencies
+      nodes[node] = dependencies
     end
 
     def parents(node)
-      @nodes[node]
+      nodes[node]
     end
 
     def empty?
-      @nodes.empty?
+      nodes.empty?
     end
 
     # Returns nodes topologically sorted, together with their order (number of
@@ -37,12 +37,14 @@ module Pallets
 
     private
 
+    attr_reader :nodes
+
     def tsort_each_node(&block)
-      @nodes.each_key(&block)
+      nodes.each_key(&block)
     end
 
     def tsort_each_child(node, &block)
-      @nodes.fetch(node).each(&block)
+      nodes.fetch(node).each(&block)
     rescue KeyError
       raise WorkflowError, "Task #{node} is marked as a dependency but not defined"
     end
