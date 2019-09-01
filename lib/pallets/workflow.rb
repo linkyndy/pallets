@@ -4,6 +4,12 @@ module Pallets
 
     attr_reader :context
 
+    def self.build(&block)
+      workflow_class = Class.new(self)
+      workflow_class.instance_eval(&block)
+      workflow_class
+    end
+
     def initialize(context_hash = {})
       @id = nil
       # Passed in context hash needs to be buffered

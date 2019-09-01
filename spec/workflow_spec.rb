@@ -24,6 +24,20 @@ describe Pallets::Workflow do
     allow(subject).to receive(:backend).and_return(backend)
   end
 
+  describe '.build' do
+    it 'returns a subclass of Pallets::Workflow' do
+      workflow = Pallets::Workflow.build { }
+      expect(workflow).to be < Pallets::Workflow
+    end
+
+    it 'evaluates the workflow definition' do
+      workflow = Pallets::Workflow.build do
+        task 'Foo'
+      end
+      expect(workflow.graph.send(:nodes)).to match('Foo' => [])
+    end
+  end
+
   it 'initializes a new context and buffers given context hash' do
     subject
     expect(context_class).to have_received(:new)
