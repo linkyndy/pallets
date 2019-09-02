@@ -40,7 +40,6 @@ module Pallets
     def construct_job(task_alias)
       Hash[self.class.task_config[task_alias]].tap do |job|
         job['wfid'] = id
-        job['workflow_class'] = self.class.name
         job['jid'] = "J#{Pallets::Util.generate_id(job['task_class'])}".upcase
         job['created_at'] = Time.now.to_f
       end

@@ -101,6 +101,13 @@ describe Pallets::DSL::Workflow do
       )
     end
 
+    it 'configures the task with the workflow class name' do
+      subject.class_eval { task 'Pay' }
+      expect(subject.task_config).to match(
+        'Pay' => a_hash_including('workflow_class' => 'Class')
+      )
+    end
+
     context 'with a :max_failures option provided' do
       it 'configures the task with the given value' do
         subject.class_eval { task 'Pay', max_failures: 1 }
