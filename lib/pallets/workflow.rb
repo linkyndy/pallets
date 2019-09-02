@@ -4,6 +4,12 @@ module Pallets
 
     attr_reader :context
 
+    def self.build(&block)
+      Class.new(self).tap do |workflow_class|
+        workflow_class.instance_eval(&block)
+      end
+    end
+
     def initialize(context_hash = {})
       @id = nil
       # Passed in context hash needs to be buffered
@@ -34,7 +40,6 @@ module Pallets
     def construct_job(task_alias)
       Hash[self.class.task_config[task_alias]].tap do |job|
         job['wfid'] = id
-        job['workflow_class'] = self.class.name
         job['jid'] = "J#{Pallets::Util.generate_id(job['task_class'])}".upcase
         job['created_at'] = Time.now.to_f
       end
@@ -46,6 +51,10 @@ module Pallets
 
     def serializer
       Pallets.serializer
+    end
+
+    def self.name
+      @name ||= super || '<Anonymous>'
     end
 
     def self.task_config

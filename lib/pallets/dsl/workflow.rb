@@ -18,6 +18,7 @@ module Pallets
         graph.add(as, dependencies)
 
         task_config[as] = {
+          'workflow_class' => self.name,
           'task_class' => task_class,
           'max_failures' => max_failures || Pallets.configuration.max_failures
         }

@@ -24,6 +24,20 @@ describe Pallets::Workflow do
     allow(subject).to receive(:backend).and_return(backend)
   end
 
+  describe '.build' do
+    it 'returns a subclass of Pallets::Workflow' do
+      workflow = Pallets::Workflow.build { }
+      expect(workflow).to be < Pallets::Workflow
+    end
+
+    it 'evaluates the workflow definition' do
+      workflow = Pallets::Workflow.build do
+        task 'Foo'
+      end
+      expect(workflow.graph.send(:nodes)).to match('Foo' => [])
+    end
+  end
+
   it 'initializes a new context and buffers given context hash' do
     subject
     expect(context_class).to have_received(:new)
@@ -83,6 +97,24 @@ describe Pallets::Workflow do
         expect(backend).to have_received(:run_workflow).with(a_kind_of(String), [
           [0, 'foobar'], [1, 'foobar'], [1, 'foobar'], [3, 'foobar']
         ], 'bazqux')
+      end
+    end
+  end
+
+  describe '.name' do
+    context 'for a regular workflow' do
+      let(:workflow) { TestWorkflow }
+
+      it 'returns the class name' do
+        expect(workflow.name).to eq('TestWorkflow')
+      end
+    end
+
+    context 'for an anonymous workflow' do
+      let(:workflow) { Pallets::Workflow.build { } }
+
+      it 'returns <Anonymous>' do
+        expect(workflow.name).to eq('<Anonymous>')
       end
     end
   end
