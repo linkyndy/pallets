@@ -6,9 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2019-09-02
 ### Added
-- define task aliases (`task 'Foo', as: 'ActualFoo'`) in order to reuse tasks within a workflow definition (#44)
-- define anonymous workflows (`Pallets::Workflow.build(&block)`) (#45)
+- define task aliases in order to reuse tasks within a workflow definition (#44)
+- define anonymous workflows (#45)
 
 ## [0.5.1] - 2019-06-01
 ### Changed
