@@ -100,4 +100,22 @@ describe Pallets::Workflow do
       end
     end
   end
+
+  describe '.name' do
+    context 'for a regular workflow' do
+      let(:workflow) { TestWorkflow }
+
+      it 'returns the class name' do
+        expect(workflow.name).to eq('TestWorkflow')
+      end
+    end
+
+    context 'for an anonymous workflow' do
+      let(:workflow) { Pallets::Workflow.build { } }
+
+      it 'returns <Anonymous>' do
+        expect(workflow.name).to eq('<Anonymous>')
+      end
+    end
+  end
 end

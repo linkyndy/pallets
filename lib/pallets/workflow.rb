@@ -54,6 +54,10 @@ module Pallets
       Pallets.serializer
     end
 
+    def self.name
+      @name ||= super || '<Anonymous>'
+    end
+
     def self.task_config
       @task_config ||= {}
     end
