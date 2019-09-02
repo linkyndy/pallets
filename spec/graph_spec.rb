@@ -1,6 +1,23 @@
 require 'spec_helper'
 
 describe Pallets::Graph do
+  describe '#add' do
+    it 'adds node and its dependencies' do
+      subject.add('Foo', ['Bar'])
+      expect(subject.send(:nodes)).to match('Foo' => ['Bar'])
+    end
+
+    context 'with a node that already exists' do
+      before do
+        subject.add('Foo', [])
+      end
+
+      it 'raises a WorkflowError' do
+        expect { subject.add('Foo', ['Bar']) }.to raise_error(Pallets::WorkflowError)
+      end
+    end
+  end
+
   describe '#parents' do
     before do
       subject.add('Foo', [])

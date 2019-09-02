@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- define task aliases (`task 'Foo', as: 'ActualFoo'`) in order to reuse tasks within a workflow definition (#44)
+
 ## [0.5.1] - 2019-06-01
 ### Changed
 - fix transaction completeness in Appsignal instrumenter (#43)
