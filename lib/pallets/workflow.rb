@@ -5,9 +5,9 @@ module Pallets
     attr_reader :context
 
     def self.build(&block)
-      workflow_class = Class.new(self)
-      workflow_class.instance_eval(&block)
-      workflow_class
+      Class.new(self).tap do |workflow_class|
+        workflow_class.instance_eval(&block)
+      end
     end
 
     def initialize(context_hash = {})
