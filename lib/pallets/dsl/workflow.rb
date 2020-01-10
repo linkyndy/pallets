@@ -1,7 +1,13 @@
 module Pallets
   module DSL
     module Workflow
-      def task(arg, as: nil, depends_on: nil, max_failures: nil, &block)
+      def task(arg=nil, as: nil, depends_on: nil, max_failures: nil, **kwargs)
+        # Have to work more to keep Pallets' nice DSL valid in Ruby 2.7
+        arg = !kwargs.empty? ? kwargs : arg
+        raise ArgumentError, 'Task is incorrectly defined. It must receive '\
+                             'either a name, or a name => dependencies pair as '\
+                             'the first argument' unless arg
+
         klass, dependencies = case arg
         when Hash
           # The `task Foo => Bar` notation
