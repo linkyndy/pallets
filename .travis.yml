@@ -11,4 +11,5 @@ before_install:
   # Bundler 2.0 needs a newer RubyGems
   - gem update --system
   - gem install bundler
+  - 2.7.0
 script: bundle exec rspec
