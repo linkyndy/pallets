@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2020-01-19
+### Added
+- support for Ruby 2.7 (#46)
+
 ## [0.6.0] - 2019-09-02
 ### Added
 - define task aliases in order to reuse tasks within a workflow definition (#44)
