@@ -72,7 +72,7 @@ describe Pallets::DSL::Workflow do
       context 'and with :as' do
         it 'identifies the name as :as and dependencies as the first value' do
           expect(subject.graph).to receive(:add).with('ActuallyDrink', ['GetThirstiness'])
-          subject.class_eval { task 'Drink', as: 'ActuallyDrink', depends_on: 'GetThirstiness' }
+          subject.class_eval { task 'Drink' => 'GetThirstiness', as: 'ActuallyDrink' }
         end
       end
 
