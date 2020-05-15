@@ -1,5 +1,7 @@
 require 'optparse'
 
+$stdout.sync = true
+
 module Pallets
   class CLI
     def initialize
