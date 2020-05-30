@@ -20,6 +20,9 @@ module Pallets
     # period, it is considered failed, and scheduled to be processed again
     attr_accessor :job_timeout
 
+    # Custom logger used throughout Pallets
+    attr_writer :logger
+
     # Maximum number of failures allowed per job. Can also be configured on a
     # per task basis
     attr_accessor :max_failures
@@ -49,6 +52,13 @@ module Pallets
       @max_failures = 3
       @serializer = :json
       @middleware = default_middleware
+    end
+
+    def logger
+      @logger || Pallets::Logger.new(STDOUT,
+        level: Pallets::Logger::INFO,
+        formatter: Pallets::Logger::Formatters::Pretty.new
+      )
     end
 
     def pool_size

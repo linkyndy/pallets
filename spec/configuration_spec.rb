@@ -1,6 +1,26 @@
 require 'spec_helper'
 
 describe Pallets::Configuration do
+  describe '#logger' do
+    context 'when explicitly set' do
+      let(:logger) { Logger.new(STDOUT) }
+      
+      before do
+        subject.logger = logger
+      end
+
+      it 'returns the set logger' do
+        expect(subject.logger).to be(logger)
+      end
+    end
+
+    context 'when not set' do
+      it 'returns the default logger' do
+        expect(subject.logger).to be_a(Pallets::Logger)
+      end
+    end
+  end
+
   describe '#pool_size' do
     before do
       subject.concurrency = 12
