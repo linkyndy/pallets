@@ -444,7 +444,8 @@ describe Pallets::Worker do
     let(:job) { double }
     let(:job_hash) do
       {
-        'wfid' => 'qux'
+        'wfid' => 'qux',
+        'jid' => 'bar'
       }
     end
     let(:context) { instance_spy('Pallets::Context', buffer: { foo: :bar }) }
@@ -463,7 +464,7 @@ describe Pallets::Worker do
 
     it 'tells the backend to save the job' do
       subject.send(:handle_job_success, context, job, job_hash)
-      expect(backend).to have_received(:save).with('qux', job, 'bazqux')
+      expect(backend).to have_received(:save).with('qux', 'bar', job, 'bazqux')
     end
   end
 end

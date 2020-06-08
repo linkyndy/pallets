@@ -92,11 +92,15 @@ describe Pallets::Workflow do
     end
 
     it 'tells the backend to run the workflow' do
+      allow(Pallets::Util).to receive(:generate_id) { |arg| arg }
       Timecop.freeze do
         subject.run
         expect(backend).to have_received(:run_workflow).with(a_kind_of(String), [
-          [0, 'foobar'], [1, 'foobar'], [1, 'foobar'], [3, 'foobar']
-        ], 'bazqux')
+          [0, 'foobar'], [1, 'foobar'], [1, 'foobar'], [1, 'foobar']
+        ], {
+          'JFOO' => [[-1, 'foobar'], [-1, 'foobar']],
+          'JBAR' => [[-1, 'foobar']]
+        }, 'bazqux')
       end
     end
   end

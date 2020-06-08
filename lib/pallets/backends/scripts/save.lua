@@ -10,11 +10,9 @@ if #ARGV > 0 then
   redis.call("HMSET", KEYS[5], unpack(ARGV))
 end
 
--- Decrement all jobs from the sorted set
-local all_pending = redis.call("ZRANGE", KEYS[1], 0, -1)
-for score, task in pairs(all_pending) do
-  redis.call("ZINCRBY", KEYS[1], -1, task)
-end
+-- Decrement jobs from the sorted set by applying a jobmask
+redis.call("ZUNIONSTORE", KEYS[1], 2, KEYS[1], KEYS[7])
+redis.call("DEL", KEYS[7])
 
 -- Queue jobs that are ready to be processed (their score is 0) and
 -- remove queued jobs from sorted set

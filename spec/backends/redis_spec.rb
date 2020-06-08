@@ -86,25 +86,25 @@ describe Pallets::Backends::Redis do
     end
 
     it 'removes the job from the reliability queue' do
-      subject.save('baz', 'foo', 'baz' => 'qux')
+      subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
       expect(redis.lrange('reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.save('baz', 'foo', 'baz' => 'qux')
+      subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
       expect(redis.zrange('reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     context 'with a non-empty context buffer' do
       it 'adds the context buffer to the context' do
-        subject.save('baz', 'foo', 'baz' => 'qux')
+        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
         expect(redis.hgetall('context:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
       end
     end
 
     context 'with an empty context buffer' do
       it 'does not touch the context' do
-        subject.save('baz', 'foo', {})
+        subject.save('baz', 'foo', 'foo', {})
         expect(redis.hgetall('context:baz')).to eq('foo' => 'bar')
       end
     end
@@ -114,22 +114,26 @@ describe Pallets::Backends::Redis do
         # Set up workflow queue
         redis.zadd('workflow-queue:baz', [[1, 'bar'], [2, 'baz'], [5, 'qux']])
 
+        # Set up jobmask
+        redis.zadd('jobmask:foo', [[-1, 'bar'], [-1, 'baz']])
+
         # Set up remaining key
         redis.set('remaining:baz', 3)
       end
 
-      it 'decrements and removes jobs with 0 from workflow queue' do
-        subject.save('baz', 'foo', 'baz' => 'qux')
-        expect(redis.zrange('workflow-queue:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 4]])
+      it 'applies and removes jobmask and removes jobs with 0 from workflow queue' do
+        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
+        expect(redis.zrange('workflow-queue:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 5]])
+        expect(redis.exists('jobmask:foo')).to be(false)
       end
 
       it 'queues jobs that are ready to be processed' do
-        subject.save('baz', 'foo', 'baz' => 'qux')
+        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
         expect(redis.lrange('queue', 0, -1)).to eq(['bar'])
       end
 
       it 'decrements the remaining key' do
-        subject.save('baz', 'foo', 'baz' => 'qux')
+        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
         expect(redis.get('remaining:baz')).to eq('2')
       end
     end
@@ -141,12 +145,12 @@ describe Pallets::Backends::Redis do
       end
 
       it 'clears the context' do
-        subject.save('baz', 'foo', 'baz' => 'qux')
+        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
         expect(redis.exists('context:baz')).to be(false)
       end
 
       it 'clears the remaining key' do
-        subject.save('baz', 'foo', 'baz' => 'qux')
+        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
         expect(redis.exists('remaining:baz')).to be(false)
       end
     end
@@ -247,31 +251,36 @@ describe Pallets::Backends::Redis do
   end
 
   describe '#run_workflow' do
+    it 'sets jobmasks' do
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
+      expect(redis.zrange('jobmask:foo', 0, -1, with_scores: true)).to eq([['bar', -1]])
+    end
+
     it 'sets the remaining key' do
-      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
       expect(redis.get('remaining:baz')).to eq('2')
     end
 
     it 'adds pending jobs to workflow queue' do
-      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
       expect(redis.zrange('workflow-queue:baz', 0, -1, with_scores: true)).to eq([['bar', 1]])
     end
 
     it 'queues jobs that are ready to be processed' do
-      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
+      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
       expect(redis.lrange('queue', 0, -1)).to eq(['foo'])
     end
 
     context 'with a non-empty context' do
       it 'sets the context' do
-        subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], 'foo' => 'bar')
+        subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
         expect(redis.hgetall('context:baz')).to eq('foo' => 'bar')
       end
     end
 
     context 'with an empty context' do
       it 'does not set the context' do
-        subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], {})
+        subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, {})
         expect(redis.exists('context:baz')).to be(false)
       end
     end

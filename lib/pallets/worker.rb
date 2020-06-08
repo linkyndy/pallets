@@ -116,7 +116,7 @@ module Pallets
     end
 
     def handle_job_success(context, job, job_hash)
-      backend.save(job_hash['wfid'], job, serializer.dump_context(context.buffer))
+      backend.save(job_hash['wfid'], job_hash['jid'], job, serializer.dump_context(context.buffer))
     end
 
     def backoff_in_seconds(count)
