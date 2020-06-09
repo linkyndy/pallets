@@ -1,3 +1,4 @@
+require 'logger'
 require 'pallets'
 
 class AnnounceProcessing
@@ -31,6 +32,8 @@ Pallets.configure do |c|
   # given up. Retry times are exponential and happen after: 7, 22, 87, 262, ...
   c.max_failures = 5
 
+  # Custom loggers can be used too
+  c.logger = Logger.new(STDOUT)
   # Job execution can be wrapped with middleware to provide custom logic.
   # Anything that responds to `call` would do
   c.middleware << AnnounceProcessing
