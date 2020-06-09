@@ -10,24 +10,21 @@ if #ARGV > 0 then
   redis.call("HMSET", KEYS[5], unpack(ARGV))
 end
 
--- Decrement all jobs from the sorted set
-local all_pending = redis.call("ZRANGE", KEYS[1], 0, -1)
-for score, task in pairs(all_pending) do
-  redis.call("ZINCRBY", KEYS[1], -1, task)
-end
+-- Decrement jobs from the sorted set by applying a jobmask
+redis.call("ZUNIONSTORE", KEYS[1], 2, KEYS[1], KEYS[7])
+redis.call("DEL", KEYS[7])
 
 -- Queue jobs that are ready to be processed (their score is 0) and
 -- remove queued jobs from sorted set
-local count = redis.call("ZCOUNT", KEYS[1], 0, 0)
-if count > 0 then
-  local work = redis.call("ZRANGEBYSCORE", KEYS[1], 0, 0)
+local work = redis.call("ZRANGEBYSCORE", KEYS[1], 0, 0)
+if #work > 0 then
   redis.call("LPUSH", KEYS[2], unpack(work))
   redis.call("ZREM", KEYS[1], unpack(work))
 end
 
 -- Decrement ETA and remove it together with the context if all tasks have
 -- been processed (ETA is 0)
-redis.call("DECR", KEYS[6])
-if tonumber(redis.call("GET", KEYS[6])) == 0 then
+local remaining = redis.call("DECR", KEYS[6])
+if remaining == 0 then
   redis.call("DEL", KEYS[5], KEYS[6])
 end

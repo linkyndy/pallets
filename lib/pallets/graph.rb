@@ -24,18 +24,11 @@ module Pallets
       nodes.empty?
     end
 
-    # Returns nodes topologically sorted, together with their order (number of
-    # nodes that have to be executed prior)
-    def sorted_with_order
-      # Identify groups of nodes that can be executed concurrently
-      groups = tsort_each.slice_when { |a, b| parents(a) != parents(b) }
+    def each
+      return enum_for(__method__) unless block_given?
 
-      # Assign order to each node
-      i = 0
-      groups.flat_map do |group|
-        group_with_order = group.product([i])
-        i += group.size
-        group_with_order
+      tsort_each do |node|
+        yield(node, parents(node))
       end
     end
 

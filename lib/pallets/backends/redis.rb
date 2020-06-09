@@ -9,6 +9,7 @@ module Pallets
       RETRY_SET_KEY = 'retry-set'
       GIVEN_UP_SET_KEY = 'given-up-set'
       WORKFLOW_QUEUE_KEY = 'workflow-queue:%s'
+      JOBMASK_KEY = 'jobmask:%s'
       CONTEXT_KEY = 'context:%s'
       REMAINING_KEY = 'remaining:%s'
 
@@ -41,11 +42,11 @@ module Pallets
         end
       end
 
-      def save(wfid, job, context_buffer)
+      def save(wfid, jid, job, context_buffer)
         @pool.execute do |client|
           client.evalsha(
             @scripts['save'],
-            [WORKFLOW_QUEUE_KEY % wfid, QUEUE_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY, CONTEXT_KEY % wfid, REMAINING_KEY % wfid],
+            [WORKFLOW_QUEUE_KEY % wfid, QUEUE_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY, CONTEXT_KEY % wfid, REMAINING_KEY % wfid, JOBMASK_KEY % jid],
             context_buffer.to_a << job
           )
         end
@@ -81,13 +82,14 @@ module Pallets
         end
       end
 
-      def run_workflow(wfid, jobs_with_order, context_buffer)
+      def run_workflow(wfid, jobs, jobmasks, context_buffer)
         @pool.execute do |client|
           client.multi do
+            jobmasks.each { |jid, jobmask| client.zadd(JOBMASK_KEY % jid, jobmask) }
             client.evalsha(
               @scripts['run_workflow'],
               [WORKFLOW_QUEUE_KEY % wfid, QUEUE_KEY, REMAINING_KEY % wfid],
-              jobs_with_order
+              jobs
             )
             client.hmset(CONTEXT_KEY % wfid, *context_buffer.to_a) unless context_buffer.empty?
           end

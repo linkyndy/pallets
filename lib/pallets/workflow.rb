@@ -20,7 +20,7 @@ module Pallets
       raise WorkflowError, "#{self.class.name} has no tasks. Workflows "\
                            "must contain at least one task" if self.class.graph.empty?
 
-      backend.run_workflow(id, jobs_with_order, serializer.dump_context(context.buffer))
+      backend.run_workflow(id, *prepare_jobs, serializer.dump_context(context.buffer))
       id
     end
 
@@ -30,11 +30,21 @@ module Pallets
 
     private
 
-    def jobs_with_order
-      self.class.graph.sorted_with_order.map do |task_alias, order|
-        job = serializer.dump(construct_job(task_alias))
-        [order, job]
+    def prepare_jobs
+      jobs = []
+      jobmasks = Hash.new { |h, k| h[k] = [] }
+      acc = {}
+
+      self.class.graph.each do |task_alias, dependencies|
+        job_hash = construct_job(task_alias)
+        acc[task_alias] = job_hash['jid']
+        job = serializer.dump(job_hash)
+
+        jobs << [dependencies.size, job]
+        dependencies.each { |d| jobmasks[acc[d]] << [-1, job] }
       end
+
+      [jobs, jobmasks]
     end
 
     def construct_job(task_alias)

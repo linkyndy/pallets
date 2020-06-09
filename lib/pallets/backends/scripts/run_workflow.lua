@@ -6,9 +6,8 @@ redis.call("SET", KEYS[3], eta)
 
 -- Queue jobs that are ready to be processed (their score is 0) and
 -- remove queued jobs from the sorted set
-local count = redis.call("ZCOUNT", KEYS[1], 0, 0)
-if count > 0 then
-  local work = redis.call("ZRANGEBYSCORE", KEYS[1], 0, 0)
+local work = redis.call("ZRANGEBYSCORE", KEYS[1], 0, 0)
+if #work > 0 then
   redis.call("LPUSH", KEYS[2], unpack(work))
   redis.call("ZREM", KEYS[1], unpack(work))
 end

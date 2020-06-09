@@ -56,7 +56,7 @@ describe Pallets::Graph do
     end
   end
 
-  describe '#sorted_with_order' do
+  describe '#each' do
     let(:graph) do
       Pallets::Graph.new.tap do |g|
         g.add('Foo', [])
@@ -66,10 +66,21 @@ describe Pallets::Graph do
       end
     end
 
-    it 'returns a properly formatted Array' do
-      expect(graph.sorted_with_order).to eq([
-        ['Foo', 0], ['Bar', 1], ['Baz', 1], ['Qux', 3]
-      ])
+    context 'with a given block' do
+      it 'yields the correct elements' do
+        expect { |b| graph.each(&b) }.to yield_successive_args(
+          ['Foo', []], ['Bar', ['Foo']], ['Baz', ['Foo']], ['Qux', ['Bar']]
+        )
+      end
+    end
+
+    context 'without a block' do
+      it 'returns an Enumerator that yields the correct elements' do
+        expect(graph.each).to be_an(Enumerator)
+        expect(graph.each.to_a).to eq([
+          ['Foo', []], ['Bar', ['Foo']], ['Baz', ['Foo']], ['Qux', ['Bar']]
+        ])
+      end
     end
 
     context 'with a dependency that is not defined' do
@@ -80,7 +91,7 @@ describe Pallets::Graph do
       end
 
       it 'raises a WorkflowError' do
-        expect { graph.sorted_with_order }.to raise_error(Pallets::WorkflowError)
+        expect { graph.each.to_a }.to raise_error(Pallets::WorkflowError)
       end
     end
   end
