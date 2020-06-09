@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2020-06-09
+### Added
+- sync output in CLI (#49)
+- support for configuring custom loggers (#50)
+
+### Changed
+- improve job scheduling using jobmasks (#52)
+
 ## [0.7.0] - 2020-01-19
 ### Added
 - support for Ruby 2.7 (#46)
