@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/linkyndy/pallets.svg?branch=master)](https://travis-ci.com/linkyndy/pallets)
 
-Toy workflow engine, written in Ruby
+Simple and reliable workflow engine, written in Ruby
 
 ## It is plain simple!
 
@@ -11,10 +11,10 @@ Toy workflow engine, written in Ruby
 require 'pallets'
 
 class MyWorkflow < Pallets::Workflow
-  task Foo
-  task Bar => Foo
-  task Baz => Foo
-  task Qux => [Bar, Baz]
+  task 'Foo'
+  task 'Bar' => 'Foo'
+  task 'Baz' => 'Foo'
+  task 'Qux' => ['Bar', 'Baz']
 end
 
 class Foo < Pallets::Task
@@ -120,7 +120,7 @@ end
 
 ## Motivation
 
-The main reason for Pallet's existence was the need of a fast, simple and reliable workflow engine, one that is easily extensible with various backends and serializer, one that does not lose your data and one that is intelligent enough to concurrently schedule a workflow's tasks.
+The main reason for Pallets' existence was the need of a fast, simple and reliable workflow engine, one that is easily extensible with various backends and serializer, one that does not lose your data and one that is intelligent enough to concurrently schedule a workflow's tasks.
 
 ## Status
 
