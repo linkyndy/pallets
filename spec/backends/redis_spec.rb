@@ -96,20 +96,6 @@ describe Pallets::Backends::Redis do
       expect(redis.zrange('reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    context 'with a non-empty context buffer' do
-      it 'adds the context buffer to the context' do
-        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
-        expect(redis.hgetall('context:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
-      end
-    end
-
-    context 'with an empty context buffer' do
-      it 'does not touch the context' do
-        subject.save('baz', 'foo', 'foo', {})
-        expect(redis.hgetall('context:baz')).to eq('foo' => 'bar')
-      end
-    end
-
     context 'with more jobs to queue' do
       before do
         # Set up workflow queue
@@ -120,6 +106,20 @@ describe Pallets::Backends::Redis do
 
         # Set up remaining key
         redis.set('remaining:baz', 3)
+      end
+
+      context 'with a non-empty context buffer' do
+        it 'adds the context buffer to the context' do
+          subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
+          expect(redis.hgetall('context:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
+        end
+      end
+
+      context 'with an empty context buffer' do
+        it 'does not touch the context' do
+          subject.save('baz', 'foo', 'foo', {})
+          expect(redis.hgetall('context:baz')).to eq('foo' => 'bar')
+        end
       end
 
       it 'applies and removes jobmask and removes jobs with 0 from workflow queue' do
@@ -141,6 +141,9 @@ describe Pallets::Backends::Redis do
 
     context 'with no more jobs to queue' do
       before do
+        # Set up jobmasks
+        redis.sadd('jobmasks:baz', 'jobmask:foo')
+
         # Set up remaining key
         redis.set('remaining:baz', 1)
       end
@@ -153,6 +156,11 @@ describe Pallets::Backends::Redis do
       it 'clears the remaining key' do
         subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
         expect(redis.exists('remaining:baz')).to be(false)
+      end
+
+      it 'clears the jobmasks set key' do
+        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
+        expect(redis.exists('jobmasks:baz')).to be(false)
       end
     end
   end
@@ -263,10 +271,22 @@ describe Pallets::Backends::Redis do
   end
 
   describe '#run_workflow' do
-    it 'sets jobmasks' do
-      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
-      expect(redis.zrange('jobmask:foo', 0, -1, with_scores: true)).to eq([['bar', -1]])
+    context 'with jobmasks' do
+      it 'sets jobmasks' do
+        subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
+        expect(redis.zrange('jobmask:foo', 0, -1, with_scores: true)).to eq([['bar', -1]])
+        expect(redis.smembers('jobmasks:baz')).to eq(['jobmask:foo'])
+      end
     end
+
+    context 'with no jobmasks' do
+      it 'does not set jobmasks' do
+        subject.run_workflow('baz', [[0, 'foo']], {}, 'foo' => 'bar')
+        expect(redis.exists('jobmask:foo')).to be(false)
+        expect(redis.exists('jobmasks:baz')).to be(false)
+      end
+    end
+
 
     it 'sets the remaining key' do
       subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')

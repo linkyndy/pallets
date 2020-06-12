@@ -22,9 +22,9 @@ if #work > 0 then
   redis.call("ZREM", KEYS[1], unpack(work))
 end
 
--- Decrement ETA and remove it together with the context if all tasks have
--- been processed (ETA is 0)
+-- Decrement ETA and remove it together with the context and jobmasks if all
+-- tasks have been processed (ETA is 0) or if workflow has been given up (ETA is -1)
 local remaining = redis.call("DECR", KEYS[6])
-if remaining == 0 then
-  redis.call("DEL", KEYS[5], KEYS[6])
+if remaining <= 0 then
+  redis.call("DEL", KEYS[5], KEYS[6], KEYS[8])
 end
