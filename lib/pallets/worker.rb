@@ -76,17 +76,13 @@ module Pallets
       task_class = Pallets::Util.constantize(job_hash["task_class"])
       task = task_class.new(context)
       begin
-        task_result = middleware.invoke(self, job_hash, context) do
+        middleware.invoke(self, job_hash, context) do
           task.run
         end
       rescue => ex
         handle_job_error(ex, job, job_hash)
       else
-        if task_result == false
-          handle_job_return_false(job, job_hash)
-        else
-          handle_job_success(context, job, job_hash)
-        end
+        handle_job_success(context, job, job_hash)
       end
     end
 
@@ -105,14 +101,6 @@ module Pallets
       else
         backend.give_up(new_job, job)
       end
-    end
-
-    def handle_job_return_false(job, job_hash)
-      new_job = serializer.dump(job_hash.merge(
-        'given_up_at' => Time.now.to_f,
-        'reason' => 'returned_false'
-      ))
-      backend.give_up(new_job, job)
     end
 
     def handle_job_success(context, job, job_hash)
