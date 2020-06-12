@@ -5,6 +5,7 @@ describe Pallets::Backends::Redis do
     Pallets::Backends::Redis.new(
       blocking_timeout: 1,
       failed_job_lifespan: 100,
+      failed_job_max_count: 1,
       job_timeout: 10,
       pool_size: 1,
       db: 15
@@ -215,6 +216,17 @@ describe Pallets::Backends::Redis do
           subject.give_up('foonew', 'foo')
           expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
         end
+      end
+    end
+
+    context 'with the given up set having the maximum number of given up jobs' do
+      before do
+        redis.zadd('given-up-set', Time.now.to_f, 'bar')
+      end
+
+      it 'removes the older given up job from the given up set' do
+        subject.give_up('foonew', 'foo')
+        expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
       end
     end
   end

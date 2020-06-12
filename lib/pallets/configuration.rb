@@ -16,6 +16,10 @@ module Pallets
     # this period, jobs will be permanently deleted
     attr_accessor :failed_job_lifespan
 
+    # Maximum number of failed jobs that can be in the given up set. When this
+    # number is reached, the oldest jobs will be permanently deleted
+    attr_accessor :failed_job_max_count
+
     # Number of seconds allowed for a job to be processed. If a job exceeds this
     # period, it is considered failed, and scheduled to be processed again
     attr_accessor :job_timeout
@@ -48,6 +52,7 @@ module Pallets
       @blocking_timeout = 5
       @concurrency = 2
       @failed_job_lifespan = 7_776_000 # 3 months
+      @failed_job_max_count = 1_000
       @job_timeout = 1_800 # 30 minutes
       @max_failures = 3
       @serializer = :json

@@ -68,6 +68,17 @@ describe Pallets::CLI do
     end
   end
 
+  context 'with --failed-job-max-count provided' do
+    before do
+      stub_const('ARGV', ['--failed-job-max-count=123'])
+    end
+
+    it 'sets the failed job max count' do
+      subject
+      expect(configuration).to have_received(:failed_job_max_count=).with(123)
+    end
+  end
+
   context 'with --pool-size provided' do
     before do
       stub_const('ARGV', ['--pool-size=123'])

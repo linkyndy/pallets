@@ -38,6 +38,7 @@ module Pallets
       cls.new(
         blocking_timeout: configuration.blocking_timeout,
         failed_job_lifespan: configuration.failed_job_lifespan,
+        failed_job_max_count: configuration.failed_job_max_count,
         job_timeout: configuration.job_timeout,
         pool_size: configuration.pool_size,
         **configuration.backend_args
