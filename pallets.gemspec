@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Andrei Horak']
   spec.email         = ['linkyndy@gmail.com']
 
-  spec.summary       = 'Toy workflow engine, written in Ruby'
-  spec.description   = 'Toy workflow engine, written in Ruby'
+  spec.summary       = 'Simple and reliable workflow engine, written in Ruby'
+  spec.description   = 'Simple and reliable workflow engine, written in Ruby'
   spec.homepage      = 'https://github.com/linkyndy/pallets'
   spec.license       = 'MIT'
 
