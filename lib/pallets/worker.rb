@@ -103,7 +103,7 @@ module Pallets
         retry_at = Time.now.to_f + backoff_in_seconds(failures)
         backend.retry(new_job, job, retry_at)
       else
-        backend.give_up(new_job, job)
+        backend.give_up(job_hash['wfid'], new_job, job)
       end
     end
 
@@ -112,7 +112,7 @@ module Pallets
         'given_up_at' => Time.now.to_f,
         'reason' => 'returned_false'
       ))
-      backend.give_up(new_job, job)
+      backend.give_up(job_hash['wfid'], new_job, job)
     end
 
     def handle_job_success(context, job, job_hash)

@@ -21,7 +21,7 @@ module Pallets
       end
 
       # Gives up job after repeteadly failing to process it
-      def give_up(job, old_job)
+      def give_up(job, old_job, wfid)
         raise NotImplementedError
       end
 

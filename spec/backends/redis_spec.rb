@@ -195,23 +195,47 @@ describe Pallets::Backends::Redis do
       # Set up reliability components
       redis.lpush('reliability-queue', 'foo')
       redis.zadd('reliability-set', 123, 'foo')
+
+      # Set up workflow queue
+      redis.zadd('workflow-queue:baz', [[1, 'bar'], [2, 'baz'], [5, 'qux']])
+
+      # Set up jobmasks
+      redis.sadd('jobmasks:baz', 'jobmask:foo')
+
+      # Set up jobmask
+      redis.zadd('jobmask:foo', [[-1, 'bar'], [-1, 'baz']])
+
+      # Set up remaining key
+      redis.set('remaining:baz', 3)
+
+      # Set up context
+      redis.hset('context:baz', 'foo', 'bar')
     end
 
     it 'removes the job from the reliability queue' do
-      subject.give_up('foonew', 'foo')
+      subject.give_up('baz', 'foonew', 'foo')
       expect(redis.lrange('reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.give_up('foonew', 'foo')
+      subject.give_up('baz', 'foonew', 'foo')
       expect(redis.zrange('reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
     it 'adds the new job to the given up set' do
       Timecop.freeze do
-        subject.give_up('foonew', 'foo')
+        subject.give_up('baz', 'foonew', 'foo')
         expect(redis.zrange('given-up-set', 0, -1, with_scores: true)).to eq([['foonew', Time.now.to_f]])
       end
+    end
+
+    it 'removes all the related workflow keys' do
+      subject.give_up('baz', 'foonew', 'foo')
+      expect(redis.exists('workflow-queue:baz')).to be(false)
+      expect(redis.exists('jobmasks:baz')).to be(false)
+      expect(redis.exists('jobmask:foo')).to be(false)
+      expect(redis.exists('remaining:baz')).to be(false)
+      expect(redis.exists('context:baz')).to be(false)
     end
 
     context 'with a given up job that failed a long time ago' do
@@ -221,7 +245,7 @@ describe Pallets::Backends::Redis do
 
       it 'removes the given up job from the given up set' do
         Timecop.freeze do
-          subject.give_up('foonew', 'foo')
+          subject.give_up('baz', 'foonew', 'foo')
           expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
         end
       end

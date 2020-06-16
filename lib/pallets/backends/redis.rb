@@ -64,11 +64,11 @@ module Pallets
         end
       end
 
-      def give_up(job, old_job)
+      def give_up(wfid, job, old_job)
         @pool.execute do |client|
           client.evalsha(
             @scripts['give_up'],
-            [GIVEN_UP_SET_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY],
+            [GIVEN_UP_SET_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY, JOBMASKS_KEY % wfid, WORKFLOW_QUEUE_KEY % wfid, REMAINING_KEY % wfid, CONTEXT_KEY % wfid],
             [Time.now.to_f, job, old_job, Time.now.to_f - @failed_job_lifespan, @failed_job_max_count]
           )
         end
