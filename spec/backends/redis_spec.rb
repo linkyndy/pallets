@@ -214,16 +214,27 @@ describe Pallets::Backends::Redis do
       end
     end
 
-    context 'with a job that was discarded a long time ago' do
+    context 'with a given up job that failed a long time ago' do
       before do
         redis.zadd('given-up-set', 1234, 'bar')
       end
 
-      it 'removes the discarded job from the given up set' do
+      it 'removes the given up job from the given up set' do
         Timecop.freeze do
           subject.discard('foo')
           expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
         end
+      end
+    end
+
+    context 'with the given up set having the maximum number of given up jobs' do
+      before do
+        redis.zadd('given-up-set', Time.now.to_f, 'bar')
+      end
+
+      it 'removes the older given up job from the given up set' do
+        subject.discard('foo')
+        expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
       end
     end
   end
@@ -295,7 +306,7 @@ describe Pallets::Backends::Redis do
       end
 
       it 'removes the older given up job from the given up set' do
-        subject.give_up('foonew', 'foo')
+        subject.give_up('baz', 'foonew', 'foo')
         expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
       end
     end
