@@ -216,10 +216,10 @@ describe Pallets::Worker do
         allow(serializer).to receive(:load).and_raise(ArgumentError)
       end
 
-      it 'tells the backend to give up on the job' do
+      it 'tells the backend to discard the job' do
         Timecop.freeze do
           subject.send(:process, job)
-          expect(backend).to have_received(:give_up).with(job, job)
+          expect(backend).to have_received(:discard).with(job)
         end
       end
 

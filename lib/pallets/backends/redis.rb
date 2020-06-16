@@ -64,6 +64,16 @@ module Pallets
         end
       end
 
+      def discard(job)
+        @pool.execute do |client|
+          client.evalsha(
+            @scripts['discard'],
+            [GIVEN_UP_SET_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY],
+            [Time.now.to_f, job, Time.now.to_f - @failed_job_lifespan, @failed_job_max_count]
+          )
+        end
+      end
+
       def give_up(wfid, job, old_job)
         @pool.execute do |client|
           client.evalsha(

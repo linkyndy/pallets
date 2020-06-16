@@ -20,6 +20,11 @@ module Pallets
         raise NotImplementedError
       end
 
+      # Discards malformed job
+      def discard(job)
+        raise NotImplementedError
+      end
+
       # Gives up job after repeteadly failing to process it
       def give_up(job, old_job, wfid)
         raise NotImplementedError

@@ -190,6 +190,44 @@ describe Pallets::Backends::Redis do
     end
   end
 
+  describe '#discard' do
+    before do
+      # Set up reliability components
+      redis.lpush('reliability-queue', 'foo')
+      redis.zadd('reliability-set', 123, 'foo')
+    end
+
+    it 'removes the job from the reliability queue' do
+      subject.discard('foo')
+      expect(redis.lrange('reliability-queue', 0, -1)).to be_empty
+    end
+
+    it 'removes the job from the reliability set' do
+      subject.discard('foo')
+      expect(redis.zrange('reliability-set', 0, -1, with_scores: true)).to be_empty
+    end
+
+    it 'adds the job to the given up set' do
+      Timecop.freeze do
+        subject.discard('foo')
+        expect(redis.zrange('given-up-set', 0, -1, with_scores: true)).to eq([['foo', Time.now.to_f]])
+      end
+    end
+
+    context 'with a job that was discarded a long time ago' do
+      before do
+        redis.zadd('given-up-set', 1234, 'bar')
+      end
+
+      it 'removes the discarded job from the given up set' do
+        Timecop.freeze do
+          subject.discard('foo')
+          expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
+        end
+      end
+    end
+  end
+
   describe '#give_up' do
     before do
       # Set up reliability components

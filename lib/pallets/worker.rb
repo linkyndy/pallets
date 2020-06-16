@@ -64,7 +64,7 @@ module Pallets
       rescue
         # We ensure only valid jobs are created. If something fishy reaches this
         # point, just give up on it
-        backend.give_up(job, job)
+        backend.discard(job)
         Pallets.logger.error "Could not deserialize #{job}. Gave up job", wid: id
         return
       end
