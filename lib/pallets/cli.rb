@@ -67,6 +67,10 @@ module Pallets
           Pallets.configuration.failed_job_lifespan = failed_job_lifespan
         end
 
+        opts.on('-m', '--failed-job-max-count NUM', Integer, 'Maximum number of jobs in the given up set') do |failed_job_max_count|
+          Pallets.configuration.failed_job_max_count = failed_job_max_count
+        end
+
         opts.on('-p', '--pool-size NUM', Integer, 'Size of backend pool') do |pool_size|
           Pallets.configuration.pool_size = pool_size
         end

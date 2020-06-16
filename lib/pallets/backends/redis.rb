@@ -13,9 +13,10 @@ module Pallets
       CONTEXT_KEY = 'context:%s'
       REMAINING_KEY = 'remaining:%s'
 
-      def initialize(blocking_timeout:, failed_job_lifespan:, job_timeout:, pool_size:, **options)
+      def initialize(blocking_timeout:, failed_job_lifespan:, failed_job_max_count:, job_timeout:, pool_size:, **options)
         @blocking_timeout = blocking_timeout
         @failed_job_lifespan = failed_job_lifespan
+        @failed_job_max_count = failed_job_max_count
         @job_timeout = job_timeout
         @pool = Pallets::Pool.new(pool_size) { ::Redis.new(options) }
 
@@ -67,7 +68,7 @@ module Pallets
           client.evalsha(
             @scripts['give_up'],
             [GIVEN_UP_SET_KEY, RELIABILITY_QUEUE_KEY, RELIABILITY_SET_KEY],
-            [Time.now.to_f, job, old_job, Time.now.to_f - @failed_job_lifespan]
+            [Time.now.to_f, job, old_job, Time.now.to_f - @failed_job_lifespan, @failed_job_max_count]
           )
         end
       end
