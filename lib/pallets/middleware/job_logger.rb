@@ -2,14 +2,17 @@ module Pallets
   module Middleware
     class JobLogger
       def self.call(worker, job, context)
-        Pallets.logger.info 'Started', extract_metadata(worker.id, job)
-        result = yield
-        Pallets.logger.info 'Done', extract_metadata(worker.id, job)
-        result
-      rescue => ex
-        Pallets.logger.warn "#{ex.class.name}: #{ex.message}", extract_metadata(worker.id, job)
-        Pallets.logger.warn ex.backtrace.join("\n"), extract_metadata(worker.id, job) unless ex.backtrace.nil?
-        raise
+        Pallets.logger.with_metadata(extract_metadata(worker.id, job)) do
+          Pallets.logger.info 'Started'
+          result = yield
+          Pallets.logger.info 'Done'
+          result
+        rescue => ex
+          Pallets.logger.warn 'Failed'
+          Pallets.logger.warn "#{ex.class.name}: #{ex.message}"
+          Pallets.logger.warn ex.backtrace.join("\n") unless ex.backtrace.nil?
+          raise
+        end
       end
 
       def self.extract_metadata(wid, job)
