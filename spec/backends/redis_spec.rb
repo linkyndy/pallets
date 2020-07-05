@@ -96,20 +96,6 @@ describe Pallets::Backends::Redis do
       expect(redis.zrange('reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    context 'with a non-empty context buffer' do
-      it 'adds the context buffer to the context' do
-        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
-        expect(redis.hgetall('context:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
-      end
-    end
-
-    context 'with an empty context buffer' do
-      it 'does not touch the context' do
-        subject.save('baz', 'foo', 'foo', {})
-        expect(redis.hgetall('context:baz')).to eq('foo' => 'bar')
-      end
-    end
-
     context 'with more jobs to queue' do
       before do
         # Set up workflow queue
@@ -120,6 +106,20 @@ describe Pallets::Backends::Redis do
 
         # Set up remaining key
         redis.set('remaining:baz', 3)
+      end
+
+      context 'with a non-empty context buffer' do
+        it 'adds the context buffer to the context' do
+          subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
+          expect(redis.hgetall('context:baz')).to eq('foo' => 'bar', 'baz' => 'qux')
+        end
+      end
+
+      context 'with an empty context buffer' do
+        it 'does not touch the context' do
+          subject.save('baz', 'foo', 'foo', {})
+          expect(redis.hgetall('context:baz')).to eq('foo' => 'bar')
+        end
       end
 
       it 'applies and removes jobmask and removes jobs with 0 from workflow queue' do
@@ -141,6 +141,9 @@ describe Pallets::Backends::Redis do
 
     context 'with no more jobs to queue' do
       before do
+        # Set up jobmasks
+        redis.sadd('jobmasks:baz', 'jobmask:foo')
+
         # Set up remaining key
         redis.set('remaining:baz', 1)
       end
@@ -153,6 +156,11 @@ describe Pallets::Backends::Redis do
       it 'clears the remaining key' do
         subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
         expect(redis.exists('remaining:baz')).to be(false)
+      end
+
+      it 'clears the jobmasks set key' do
+        subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
+        expect(redis.exists('jobmasks:baz')).to be(false)
       end
     end
   end
@@ -182,7 +190,7 @@ describe Pallets::Backends::Redis do
     end
   end
 
-  describe '#give_up' do
+  describe '#discard' do
     before do
       # Set up reliability components
       redis.lpush('reliability-queue', 'foo')
@@ -190,19 +198,19 @@ describe Pallets::Backends::Redis do
     end
 
     it 'removes the job from the reliability queue' do
-      subject.give_up('foonew', 'foo')
+      subject.discard('foo')
       expect(redis.lrange('reliability-queue', 0, -1)).to be_empty
     end
 
     it 'removes the job from the reliability set' do
-      subject.give_up('foonew', 'foo')
+      subject.discard('foo')
       expect(redis.zrange('reliability-set', 0, -1, with_scores: true)).to be_empty
     end
 
-    it 'adds the new job to the given up set' do
+    it 'adds the job to the given up set' do
       Timecop.freeze do
-        subject.give_up('foonew', 'foo')
-        expect(redis.zrange('given-up-set', 0, -1, with_scores: true)).to eq([['foonew', Time.now.to_f]])
+        subject.discard('foo')
+        expect(redis.zrange('given-up-set', 0, -1, with_scores: true)).to eq([['foo', Time.now.to_f]])
       end
     end
 
@@ -213,7 +221,7 @@ describe Pallets::Backends::Redis do
 
       it 'removes the given up job from the given up set' do
         Timecop.freeze do
-          subject.give_up('foonew', 'foo')
+          subject.discard('foo')
           expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
         end
       end
@@ -225,7 +233,80 @@ describe Pallets::Backends::Redis do
       end
 
       it 'removes the older given up job from the given up set' do
-        subject.give_up('foonew', 'foo')
+        subject.discard('foo')
+        expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
+      end
+    end
+  end
+
+  describe '#give_up' do
+    before do
+      # Set up reliability components
+      redis.lpush('reliability-queue', 'foo')
+      redis.zadd('reliability-set', 123, 'foo')
+
+      # Set up workflow queue
+      redis.zadd('workflow-queue:baz', [[1, 'bar'], [2, 'baz'], [5, 'qux']])
+
+      # Set up jobmasks
+      redis.sadd('jobmasks:baz', 'jobmask:foo')
+
+      # Set up jobmask
+      redis.zadd('jobmask:foo', [[-1, 'bar'], [-1, 'baz']])
+
+      # Set up remaining key
+      redis.set('remaining:baz', 3)
+
+      # Set up context
+      redis.hset('context:baz', 'foo', 'bar')
+    end
+
+    it 'removes the job from the reliability queue' do
+      subject.give_up('baz', 'foonew', 'foo')
+      expect(redis.lrange('reliability-queue', 0, -1)).to be_empty
+    end
+
+    it 'removes the job from the reliability set' do
+      subject.give_up('baz', 'foonew', 'foo')
+      expect(redis.zrange('reliability-set', 0, -1, with_scores: true)).to be_empty
+    end
+
+    it 'adds the new job to the given up set' do
+      Timecop.freeze do
+        subject.give_up('baz', 'foonew', 'foo')
+        expect(redis.zrange('given-up-set', 0, -1, with_scores: true)).to eq([['foonew', Time.now.to_f]])
+      end
+    end
+
+    it 'removes all the related workflow keys' do
+      subject.give_up('baz', 'foonew', 'foo')
+      expect(redis.exists('workflow-queue:baz')).to be(false)
+      expect(redis.exists('jobmasks:baz')).to be(false)
+      expect(redis.exists('jobmask:foo')).to be(false)
+      expect(redis.exists('remaining:baz')).to be(false)
+      expect(redis.exists('context:baz')).to be(false)
+    end
+
+    context 'with a given up job that failed a long time ago' do
+      before do
+        redis.zadd('given-up-set', 1234, 'bar')
+      end
+
+      it 'removes the given up job from the given up set' do
+        Timecop.freeze do
+          subject.give_up('baz', 'foonew', 'foo')
+          expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
+        end
+      end
+    end
+
+    context 'with the given up set having the maximum number of given up jobs' do
+      before do
+        redis.zadd('given-up-set', Time.now.to_f, 'bar')
+      end
+
+      it 'removes the older given up job from the given up set' do
+        subject.give_up('baz', 'foonew', 'foo')
         expect(redis.zrange('given-up-set', 0, -1)).not_to include('bar')
       end
     end
@@ -263,10 +344,22 @@ describe Pallets::Backends::Redis do
   end
 
   describe '#run_workflow' do
-    it 'sets jobmasks' do
-      subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
-      expect(redis.zrange('jobmask:foo', 0, -1, with_scores: true)).to eq([['bar', -1]])
+    context 'with jobmasks' do
+      it 'sets jobmasks' do
+        subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
+        expect(redis.zrange('jobmask:foo', 0, -1, with_scores: true)).to eq([['bar', -1]])
+        expect(redis.smembers('jobmasks:baz')).to eq(['jobmask:foo'])
+      end
     end
+
+    context 'with no jobmasks' do
+      it 'does not set jobmasks' do
+        subject.run_workflow('baz', [[0, 'foo']], {}, 'foo' => 'bar')
+        expect(redis.exists('jobmask:foo')).to be(false)
+        expect(redis.exists('jobmasks:baz')).to be(false)
+      end
+    end
+
 
     it 'sets the remaining key' do
       subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, 'foo' => 'bar')
