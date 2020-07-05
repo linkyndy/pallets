@@ -125,7 +125,7 @@ describe Pallets::Backends::Redis do
       it 'applies and removes jobmask and removes jobs with 0 from workflow queue' do
         subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
         expect(redis.zrange('workflow-queue:baz', 0, -1, with_scores: true)).to eq([['baz', 1], ['qux', 5]])
-        expect(redis.exists('jobmask:foo')).to be(false)
+        expect(redis.exists?('jobmask:foo')).to be(false)
       end
 
       it 'queues jobs that are ready to be processed' do
@@ -150,17 +150,17 @@ describe Pallets::Backends::Redis do
 
       it 'clears the context' do
         subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
-        expect(redis.exists('context:baz')).to be(false)
+        expect(redis.exists?('context:baz')).to be(false)
       end
 
       it 'clears the remaining key' do
         subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
-        expect(redis.exists('remaining:baz')).to be(false)
+        expect(redis.exists?('remaining:baz')).to be(false)
       end
 
       it 'clears the jobmasks set key' do
         subject.save('baz', 'foo', 'foo', 'baz' => 'qux')
-        expect(redis.exists('jobmasks:baz')).to be(false)
+        expect(redis.exists?('jobmasks:baz')).to be(false)
       end
     end
   end
@@ -280,11 +280,11 @@ describe Pallets::Backends::Redis do
 
     it 'removes all the related workflow keys' do
       subject.give_up('baz', 'foonew', 'foo')
-      expect(redis.exists('workflow-queue:baz')).to be(false)
-      expect(redis.exists('jobmasks:baz')).to be(false)
-      expect(redis.exists('jobmask:foo')).to be(false)
-      expect(redis.exists('remaining:baz')).to be(false)
-      expect(redis.exists('context:baz')).to be(false)
+      expect(redis.exists?('workflow-queue:baz')).to be(false)
+      expect(redis.exists?('jobmasks:baz')).to be(false)
+      expect(redis.exists?('jobmask:foo')).to be(false)
+      expect(redis.exists?('remaining:baz')).to be(false)
+      expect(redis.exists?('context:baz')).to be(false)
     end
 
     context 'with a given up job that failed a long time ago' do
@@ -355,8 +355,8 @@ describe Pallets::Backends::Redis do
     context 'with no jobmasks' do
       it 'does not set jobmasks' do
         subject.run_workflow('baz', [[0, 'foo']], {}, 'foo' => 'bar')
-        expect(redis.exists('jobmask:foo')).to be(false)
-        expect(redis.exists('jobmasks:baz')).to be(false)
+        expect(redis.exists?('jobmask:foo')).to be(false)
+        expect(redis.exists?('jobmasks:baz')).to be(false)
       end
     end
 
@@ -386,7 +386,7 @@ describe Pallets::Backends::Redis do
     context 'with an empty context' do
       it 'does not set the context' do
         subject.run_workflow('baz', [[0, 'foo'], [1, 'bar']], { 'foo' => [-1, 'bar'] }, {})
-        expect(redis.exists('context:baz')).to be(false)
+        expect(redis.exists?('context:baz')).to be(false)
       end
     end
   end
