@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2020-07-05
+### Added
+- limit number of jobs in given up set by number (#56)
+- job duration and metadata to all task logs (#57)
+
+### Changed
+- remove all related workflow keys when giving up on a job (#55)
+- support redis-rb ~> 4.2 (#58)
+
+### Removed
+- support for configuring custom loggers (#57)
+
 ## [0.8.0] - 2020-06-09
 ### Added
 - sync output in CLI (#49)
