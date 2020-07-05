@@ -53,8 +53,8 @@ module Pallets
     rescue Pallets::Shutdown
       @manager.remove_worker(self)
     rescue => ex
-      Pallets.logger.error "#{ex.class.name}: #{ex.message}", wid: id
-      Pallets.logger.error ex.backtrace.join("\n"), wid: id unless ex.backtrace.nil?
+      Pallets.logger.error "#{ex.class.name}: #{ex.message}"
+      Pallets.logger.error ex.backtrace.join("\n") unless ex.backtrace.nil?
       @manager.replace_worker(self)
     end
 
@@ -65,7 +65,7 @@ module Pallets
         # We ensure only valid jobs are created. If something fishy reaches this
         # point, just give up on it
         backend.discard(job)
-        Pallets.logger.error "Could not deserialize #{job}. Gave up job", wid: id
+        Pallets.logger.error "Could not deserialize #{job}. Gave up job"
         return
       end
 
