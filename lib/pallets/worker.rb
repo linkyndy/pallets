@@ -55,6 +55,8 @@ module Pallets
     rescue => ex
       Pallets.logger.error "#{ex.class.name}: #{ex.message}"
       Pallets.logger.error ex.backtrace.join("\n") unless ex.backtrace.nil?
+      # Do not flood the process in case of persisting unforeseen errors
+      sleep 1
       @manager.replace_worker(self)
     end
 

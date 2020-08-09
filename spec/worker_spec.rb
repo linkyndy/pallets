@@ -92,6 +92,8 @@ describe Pallets::Worker do
       allow(subject).to receive(:loop).and_yield
       allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:process).with(job)
+      # Do not *actually* sleep
+      allow(subject).to receive(:sleep)
     end
 
     it 'tells the backend to pick work' do
@@ -158,6 +160,11 @@ describe Pallets::Worker do
       before do
         # Simulate an unexpected non-job error that occurs while working
         allow(backend).to receive(:pick).and_raise(ArgumentError)
+      end
+
+      it 'waits for a second before doing anything' do
+        subject.send(:work)
+        expect(subject).to have_received(:sleep).with(1).once
       end
 
       it 'asks the manager to replace itself' do
