@@ -31,6 +31,12 @@ module Pallets
     # Number of connections to the backend
     attr_writer :pool_size
 
+    # Number of seconds at which the scheduler checks whether there are jobs
+    # due to be (re)processed. Note that this interval is per process; it might
+    # require tweaking in case of running multiple Pallets instances, so that
+    # the backend is not polled too often
+    attr_accessor :scheduler_polling_interval
+
     # Serializer used for jobs
     attr_accessor :serializer
 
@@ -52,6 +58,7 @@ module Pallets
       @failed_job_max_count = 1_000
       @job_timeout = 1_800 # 30 minutes
       @max_failures = 3
+      @scheduler_polling_interval = 10
       @serializer = :json
       @middleware = default_middleware
     end

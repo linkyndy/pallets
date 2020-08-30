@@ -57,6 +57,17 @@ describe Pallets::CLI do
     end
   end
 
+  context 'with --scheduler-polling-interval provided' do
+    before do
+      stub_const('ARGV', ['--scheduler-polling-interval=123'])
+    end
+
+    it 'sets the given scheduler polling interval' do
+      subject
+      expect(configuration).to have_received(:scheduler_polling_interval=).with(123)
+    end
+  end
+
   context 'with --failed-job-lifespan provided' do
     before do
       stub_const('ARGV', ['--failed-job-lifespan=123'])
