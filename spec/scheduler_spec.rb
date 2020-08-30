@@ -7,13 +7,21 @@ describe Pallets::Scheduler do
 
   describe '#start' do
     before do
+      allow(Pallets.configuration).to receive(:scheduler_polling_interval).and_return(10)
       allow(Thread).to receive(:new).and_yield
       allow(subject).to receive(:work)
+      # Do not *actually* sleep
+      allow(subject).to receive(:sleep)
     end
 
     it 'creates a separate thread' do
       subject.start
       expect(Thread).to have_received(:new)
+    end
+
+    it 'waits a random number of seconds before it starts working' do
+      subject.start
+      expect(subject).to have_received(:sleep).with(1).at_most(9).times
     end
 
     it 'starts working' do

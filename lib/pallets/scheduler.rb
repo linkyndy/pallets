@@ -7,7 +7,7 @@ module Pallets
     end
 
     def start
-      @thread ||= Thread.new { work }
+      @thread ||= Thread.new { wait_initial_bit; work }
     end
 
     def shutdown
@@ -38,6 +38,12 @@ module Pallets
         backend.reschedule_all(Time.now.to_f)
         wait_a_bit
       end
+    end
+
+    def wait_initial_bit
+      # Randomly wait a bit before starting working, so that multiple processes
+      # will not hit the backend all at once
+      wait_a_bit(rand(Pallets.configuration.scheduler_polling_interval))
     end
 
     def wait_a_bit(seconds = Pallets.configuration.scheduler_polling_interval)
