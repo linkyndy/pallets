@@ -40,11 +40,11 @@ module Pallets
       end
     end
 
-    def wait_a_bit
-      # Wait for roughly 10 seconds
+    def wait_a_bit(seconds = Pallets.configuration.scheduler_polling_interval)
+      # Wait for roughly the configured number of seconds
       # We don't want to block the entire polling interval, since we want to
       # deal with shutdowns synchronously and as fast as possible
-      10.times do
+      seconds.times do
         break if needs_to_stop?
         sleep 1
       end

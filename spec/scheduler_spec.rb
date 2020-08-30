@@ -86,6 +86,7 @@ describe Pallets::Scheduler do
     let(:backend) { instance_spy('Pallets::Backends::Base') }
 
     before do
+      allow(Pallets.configuration).to receive(:scheduler_polling_interval).and_return(10)
       allow(subject).to receive(:loop).and_yield
       allow(subject).to receive(:backend).and_return(backend)
       # Do not *actually* sleep
