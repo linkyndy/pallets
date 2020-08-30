@@ -43,7 +43,7 @@ end
 
 class Volatile < Pallets::Task
   def run
-    raise 'I am ràndomly failing' if [true, false].sample
+    raise 'I am randomly failing' if [true, false].sample
   end
 end
 
