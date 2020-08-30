@@ -63,6 +63,10 @@ module Pallets
           Pallets.configuration.max_failures = max_failures
         end
 
+        opts.on('-i', '--scheduler-polling-interval NUM', Integer, 'Seconds between scheduler backend polls') do |scheduler_polling_interval|
+          Pallets.configuration.scheduler_polling_interval = scheduler_polling_interval
+        end
+
         opts.on('-l', '--failed-job-lifespan NUM', Integer, 'Seconds a job stays in the given up set') do |failed_job_lifespan|
           Pallets.configuration.failed_job_lifespan = failed_job_lifespan
         end
