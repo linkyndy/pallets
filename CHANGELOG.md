@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2020-08-30
+### Added
+- configure polling interval for scheduler (#60)
+
+### Changed
+- handle persisting unforseen worker errors more gracefully (#59)
+- add initial wait to scheduler startup (#60)
+
 ## [0.9.0] - 2020-07-05
 ### Added
 - limit number of jobs in given up set by number (#56)
