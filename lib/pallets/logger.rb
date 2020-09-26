@@ -9,8 +9,7 @@ module Pallets
         metadata = Thread.current[:pallets_log_metadata]
         return super(message) if metadata.nil?
 
-        formatted_metadata = ' ' + metadata.map { |k, v| "#{k}=#{v}" }.join(' ')
-        super(formatted_metadata) { message }
+        super(metadata) { message }
       end
     end
 
@@ -24,7 +23,19 @@ module Pallets
     module Formatters
       class Pretty < ::Logger::Formatter
         def call(severity, time, metadata, message)
-          "#{time.utc.iso8601(4)} pid=#{Process.pid}#{metadata} #{severity}: #{message}\n"
+          formatted_metadata = ' ' + metadata.map { |k, v| "#{k}=#{v}" }.join(' ') if metadata
+          "#{time.utc.iso8601(4)} pid=#{Process.pid}#{formatted_metadata} #{severity}: #{message}\n"
+        end
+      end
+
+      class Json < ::Logger::Formatter
+        def call(severity, time, metadata, message)
+          {
+            timestamp: time.utc.iso8601(4),
+            pid: Process.pid,
+            severity: severity,
+            message: message
+          }.merge(metadata).to_json + "\n"
         end
       end
     end
