@@ -2,8 +2,9 @@ module Pallets
   class Worker
     attr_reader :manager
 
-    def initialize(manager)
+    def initialize(manager, backend)
       @manager = manager
+      @backend = backend
       @current_job = nil
       @needs_to_stop = false
       @thread = nil
@@ -40,7 +41,7 @@ module Pallets
       loop do
         break if needs_to_stop?
 
-        @current_job = backend.pick
+        @current_job = @backend.pick
         # No need to requeue because of the reliability queue
         break if needs_to_stop?
         next if @current_job.nil?
@@ -66,13 +67,13 @@ module Pallets
       rescue
         # We ensure only valid jobs are created. If something fishy reaches this
         # point, just give up on it
-        backend.discard(job)
+        @backend.discard(job)
         Pallets.logger.error "Could not deserialize #{job}. Gave up job"
         return
       end
 
       context = Context[
-        serializer.load_context(backend.get_context(job_hash['wfid']))
+        serializer.load_context(@backend.get_context(job_hash['wfid']))
       ]
 
       task_class = Pallets::Util.constantize(job_hash["task_class"])
@@ -103,9 +104,9 @@ module Pallets
       ))
       if failures < job_hash['max_failures']
         retry_at = Time.now.to_f + backoff_in_seconds(failures)
-        backend.retry(new_job, job, retry_at)
+        @backend.retry(new_job, job, retry_at)
       else
-        backend.give_up(job_hash['wfid'], new_job, job)
+        @backend.give_up(job_hash['wfid'], new_job, job)
       end
     end
 
@@ -114,19 +115,15 @@ module Pallets
         'given_up_at' => Time.now.to_f,
         'reason' => 'returned_false'
       ))
-      backend.give_up(job_hash['wfid'], new_job, job)
+      @backend.give_up(job_hash['wfid'], new_job, job)
     end
 
     def handle_job_success(context, job, job_hash)
-      backend.save(job_hash['wfid'], job_hash['jid'], job, serializer.dump_context(context.buffer))
+      @backend.save(job_hash['wfid'], job_hash['jid'], job, serializer.dump_context(context.buffer))
     end
 
     def backoff_in_seconds(count)
       count ** 4 + rand(6..10)
-    end
-
-    def backend
-      @backend ||= Pallets.backend
     end
 
     def serializer

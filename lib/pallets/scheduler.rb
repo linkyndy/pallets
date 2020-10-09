@@ -1,7 +1,8 @@
 module Pallets
   class Scheduler
-    def initialize(manager)
+    def initialize(manager, backend)
       @manager = manager
+      @backend = backend
       @needs_to_stop = false
       @thread = nil
     end
@@ -35,7 +36,7 @@ module Pallets
       loop do
         break if needs_to_stop?
 
-        backend.reschedule_all(Time.now.to_f)
+        @backend.reschedule_all(Time.now.to_f)
         wait_a_bit
       end
     end
@@ -54,10 +55,6 @@ module Pallets
         break if needs_to_stop?
         sleep 1
       end
-    end
-
-    def backend
-      @backend ||= Pallets.backend
     end
   end
 end

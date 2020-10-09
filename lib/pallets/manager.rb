@@ -3,8 +3,9 @@ module Pallets
     attr_reader :workers, :scheduler
 
     def initialize(concurrency: Pallets.configuration.concurrency)
-      @workers = concurrency.times.map { Worker.new(self) }
-      @scheduler = Scheduler.new(self)
+      backend = Pallets.backend
+      @workers = concurrency.times.map { Worker.new(self, backend) }
+      @scheduler = Scheduler.new(self, backend)
       @lock = Mutex.new
       @needs_to_stop = false
     end
