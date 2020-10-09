@@ -35,7 +35,7 @@ module Pallets
             pid: Process.pid,
             severity: severity,
             message: message
-          }.merge(metadata).to_json + "\n"
+          }.merge(metadata || {}).to_json + "\n"
         end
       end
     end
