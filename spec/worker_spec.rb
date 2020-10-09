@@ -1,9 +1,10 @@
 require 'spec_helper'
 
 describe Pallets::Worker do
-  subject { Pallets::Worker.new(manager) }
+  subject { Pallets::Worker.new(manager, backend) }
 
   let(:manager) { instance_spy('Pallets::Manager') }
+  let(:backend) { instance_spy('Pallets::Backends::Base') }
 
   describe '#start' do
     before do
@@ -85,15 +86,14 @@ describe Pallets::Worker do
   end
 
   describe '#work' do
-    let(:backend) { instance_spy('Pallets::Backends::Base', pick: job) }
     let(:job) { double }
 
     before do
       allow(subject).to receive(:loop).and_yield
-      allow(subject).to receive(:backend).and_return(backend)
       allow(subject).to receive(:process).with(job)
       # Do not *actually* sleep
       allow(subject).to receive(:sleep)
+      allow(backend).to receive(:pick).and_return(job)
     end
 
     it 'tells the backend to pick work' do

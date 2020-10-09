@@ -1,9 +1,10 @@
 require 'spec_helper'
 
 describe Pallets::Scheduler do
-  subject { Pallets::Scheduler.new(manager) }
+  subject { Pallets::Scheduler.new(manager, backend) }
 
   let(:manager) { instance_spy('Pallets::Manager') }
+  let(:backend) { instance_spy('Pallets::Backends::Base') }
 
   describe '#start' do
     before do
@@ -91,12 +92,9 @@ describe Pallets::Scheduler do
   end
 
   describe '#work' do
-    let(:backend) { instance_spy('Pallets::Backends::Base') }
-
     before do
       allow(Pallets.configuration).to receive(:scheduler_polling_interval).and_return(10)
       allow(subject).to receive(:loop).and_yield
-      allow(subject).to receive(:backend).and_return(backend)
       # Do not *actually* sleep
       allow(subject).to receive(:sleep)
     end
