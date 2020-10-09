@@ -34,7 +34,7 @@ describe Pallets::Logger do
             subject.send(severity, 'foo')
           end
           expect(formatter).to have_received(:call).with(
-            formatted_severity, a_kind_of(Time), ' foo=bar baz=qux', 'foo'
+            formatted_severity, a_kind_of(Time), { foo: :bar, baz: :qux }, 'foo'
           )
         end
       end
@@ -62,14 +62,55 @@ describe Pallets::Logger do
   context 'using the Pretty formatter' do
     let(:formatter) { Pallets::Logger::Formatters::Pretty.new }
 
-    it 'formats the message correctly' do
-      Timecop.freeze do
-        subject.with_metadata(foo: :bar) do
-          subject.info('foo')
+    context 'with given metadata' do
+      it 'formats the message correctly' do
+        Timecop.freeze do
+          subject.with_metadata(foo: :bar) do
+            subject.info('foo')
+          end
+          expect(output.string).to match(
+            /#{Time.now.utc.iso8601(4)} pid=\d+ foo=bar INFO: foo\n/
+          )
         end
-        expect(output.string).to match(
-          /#{Time.now.utc.iso8601(4)} pid=\d+ foo=bar INFO: foo\n/
-        )
+      end
+    end
+
+    context 'without given metadata' do
+      it 'formats the message correctly' do
+        Timecop.freeze do
+          subject.info('foo')
+          expect(output.string).to match(
+            /#{Time.now.utc.iso8601(4)} pid=\d+ INFO: foo\n/
+          )
+        end
+      end
+    end
+  end
+
+  context 'using the Json formatter' do
+    let(:formatter) { Pallets::Logger::Formatters::Json.new }
+
+    context 'with given metadata' do
+      it 'formats the message correctly' do
+        Timecop.freeze do
+          subject.with_metadata(foo: :bar) do
+            subject.info('foo')
+          end
+          expect(output.string).to match(
+            /{"timestamp":"#{Time.now.utc.iso8601(4)}","pid":\d+,"severity":"INFO","message":"foo","foo":"bar"}/
+          )
+        end
+      end
+    end
+
+    context 'without given metadata' do
+      it 'formats the message correctly' do
+        Timecop.freeze do
+          subject.info('foo')
+          expect(output.string).to match(
+            /{"timestamp":"#{Time.now.utc.iso8601(4)}","pid":\d+,"severity":"INFO","message":"foo"}/
+          )
+        end
       end
     end
   end
