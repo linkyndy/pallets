@@ -1,7 +1,5 @@
 module Pallets
   class Worker
-    attr_reader :manager
-
     def initialize(manager, backend)
       @manager = manager
       @backend = backend
