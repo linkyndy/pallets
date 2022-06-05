@@ -96,15 +96,15 @@ module Pallets
 
       def run_workflow(wfid, jobs, jobmasks, context_buffer)
         @pool.execute do |client|
-          client.multi do
-            jobmasks.each { |jid, jobmask| client.zadd(JOBMASK_KEY % jid, jobmask) }
-            client.sadd(JOBMASKS_KEY % wfid, jobmasks.map { |jid, _| JOBMASK_KEY % jid }) unless jobmasks.empty?
-            client.evalsha(
+          client.multi do |pipeline|
+            jobmasks.each { |jid, jobmask| pipeline.zadd(JOBMASK_KEY % jid, jobmask) }
+            pipeline.sadd(JOBMASKS_KEY % wfid, jobmasks.map { |jid, _| JOBMASK_KEY % jid }) unless jobmasks.empty?
+            pipeline.evalsha(
               @scripts['run_workflow'],
               [WORKFLOW_QUEUE_KEY % wfid, QUEUE_KEY, REMAINING_KEY % wfid],
               jobs
             )
-            client.hmset(CONTEXT_KEY % wfid, *context_buffer.to_a) unless context_buffer.empty?
+            pipeline.hmset(CONTEXT_KEY % wfid, *context_buffer.to_a) unless context_buffer.empty?
           end
         end
       end
